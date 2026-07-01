@@ -1,0 +1,22 @@
+node_modules/
+dist/
+drizzle/
+
+# SQLite databases + WAL/SHM sidecars
+*.db
+*.db-wal
+*.db-shm
+data.db
+fresh.db
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# QA output
+script/qa/last-report.json
+
+# misc
+.DS_Store
+*.log
