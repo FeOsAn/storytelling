@@ -23,13 +23,18 @@ export interface BigClaim {
 
 const NUMBER_RE = /(\d[\d,.]*)\s*(k|m|thousand|million|%|percent)?/gi;
 
-const CATEGORY_RULES: { category: ClaimCategory; re: RegExp }[] = [
-  { category: "revenue", re: /\b(revenue|\$|£|€|earn|earned|sales|paid|deal worth|contract)\b/i },
-  { category: "audience metric", re: /\b(subscriber|subscribers|followers|list|open rate|email|dm)\b/i },
-  { category: "media reach", re: /\b(views|impressions|reach|streams|downloads)\b/i },
-  { category: "certification", re: /\b(certified|certification|qualified|registered|licen[cs]ed|accredit)\b/i },
-  { category: "performance result", re: /\b(kg|lbs|pr\b|pb\b|deadlift|squat|marathon|ultra|finish|km|miles|race)\b/i },
-  { category: "outcome claim", re: /\b(cured|off (?:their |the )?meds|antidepressant|lost .* stone|reversed|healed)\b/i },
+/**
+ * Category signals. `priority` is a specificity tiebreak (lower = wins ties): rarer,
+ * more-specific signals (an outcome, a certification) beat broad ones (a "finish"/"race"
+ * word) so a revenue/reach number isn't mislabelled a "performance result" (roadmap #3).
+ */
+const CATEGORY_RULES: { category: ClaimCategory; re: RegExp; priority: number }[] = [
+  { category: "outcome claim", priority: 0, re: /\b(cured|off (?:their |the )?meds|antidepressant|lost .* stone|reversed|healed)\b/i },
+  { category: "certification", priority: 1, re: /\b(certified|certification|qualified|registered|licen[cs]ed|accredit)\b/i },
+  { category: "revenue", priority: 2, re: /\b(revenue|\$|£|€|earn|earned|sales|paid|deal worth|contract)\b/i },
+  { category: "audience metric", priority: 3, re: /\b(subscriber|subscribers|followers|list|open rate|email|dm)\b/i },
+  { category: "media reach", priority: 4, re: /\b(views|impressions|reach|streams|downloads)\b/i },
+  { category: "performance result", priority: 5, re: /\b(kg|lbs|pr\b|pb\b|deadlift|squat|marathon|ultra|finish|km|miles|race)\b/i },
 ];
 
 /** True when an answer contains a sizeable, verifiable-sounding claim. */
@@ -45,12 +50,26 @@ export function isBigClaim(text: string): boolean {
   return outcome || (hasBigNumber && commercialNoun);
 }
 
-/** Best-effort category for the *suggested* receipt type. See KNOWN LIMITATION above. */
+/**
+ * Category for the *suggested* receipt type. Picks the category with the most
+ * keyword hits (the dominant signal), not the first rule in the list — so ordering
+ * no longer decides the label. Ties break toward the more specific category.
+ */
 export function categorize(text: string): ClaimCategory {
+  const lower = (text || "").toLowerCase();
+  let best: (typeof CATEGORY_RULES)[number] | null = null;
+  let bestScore = 0;
   for (const rule of CATEGORY_RULES) {
-    if (rule.re.test(text)) return rule.category;
+    // Clone with a global flag to count occurrences without mutating rule.re's state.
+    const hits = lower.match(new RegExp(rule.re.source, "gi"));
+    const score = hits ? hits.length : 0;
+    if (score === 0) continue;
+    if (score > bestScore || (score === bestScore && best !== null && rule.priority < best.priority)) {
+      best = rule;
+      bestScore = score;
+    }
   }
-  return "outcome claim";
+  return best ? best.category : "outcome claim";
 }
 
 /** Extract the sentence-ish fragments that trip the big-claim detector. */

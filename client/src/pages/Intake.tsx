@@ -31,6 +31,7 @@ export function Intake() {
   // edge
   const [edge, setEdge] = useState("");
   const [edgeNote, setEdgeNote] = useState("");
+  const [pendingRefine, setPendingRefine] = useState(false);
 
   const current = script[qIndex];
 
@@ -130,11 +131,14 @@ export function Intake() {
 
   async function confirmEdge(action: EdgeAction) {
     setPhase("generating");
+    // The resolved edge fed to generation: the refined text on refine, the
+    // hypothesis on confirm, and empty on reject (engine re-infers from the turns).
+    const finalEdge = action === "refine" ? edgeNote.trim() : action === "confirm" ? edge : "";
     const reviewTurn: IntakeTurnClient = {
       stage: "Review",
       chapter: "Proof & Fit",
-      question: `Edge hypothesis: ${edge}`,
-      answer: `${action}${edgeNote ? `: ${edgeNote}` : ""}`,
+      question: `Edge hypothesis (${action}): ${edge}`,
+      answer: finalEdge,
       source: "text",
       kind: "review",
     };
@@ -186,6 +190,22 @@ export function Intake() {
         <h1 className="text-2xl font-bold">Here&apos;s the edge we heard</h1>
         {busy && !edge ? (
           <p className="text-muted-foreground">Listening back to your answers…</p>
+        ) : pendingRefine ? (
+          // Second micro-confirm: lock the sharper, creator-corrected version (roadmap #2).
+          <>
+            <p className="text-sm text-muted-foreground">So the edge is —</p>
+            <Card>
+              <CardBody>
+                <p className="text-lg font-medium">{edgeNote.trim()}</p>
+              </CardBody>
+            </Card>
+            <div className="flex flex-wrap gap-3">
+              <Button onClick={() => confirmEdge("refine")}>Yes — lock it in</Button>
+              <Button variant="ghost" onClick={() => setPendingRefine(false)}>
+                Let me tweak it
+              </Button>
+            </div>
+          </>
         ) : (
           <>
             <Card>
@@ -201,7 +221,11 @@ export function Intake() {
             />
             <div className="flex flex-wrap gap-3">
               <Button onClick={() => confirmEdge("confirm")}>That&apos;s it — confirm</Button>
-              <Button variant="secondary" onClick={() => confirmEdge("refine")} disabled={!edgeNote.trim()}>
+              <Button
+                variant="secondary"
+                onClick={() => setPendingRefine(true)}
+                disabled={!edgeNote.trim()}
+              >
                 Use my refined version
               </Button>
               <Button variant="ghost" onClick={() => confirmEdge("reject")}>
