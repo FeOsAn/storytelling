@@ -36,9 +36,11 @@ async function tryLlmProfile(input: GenerateInput): Promise<StoryProfile | null>
     .join("\n\n");
 
   const text = await complete({
-    maxTokens: 3000,
+    // A full profile with rich prose needs headroom — too small a budget truncates
+    // the JSON and the whole response is silently discarded.
+    maxTokens: 8000,
     system: `You are StoryFit, a brand-story strategist for fitness/wellness/performance creators.
-Turn the interview into a UNIQUE, brand-ready story profile. The differentiator is the creator's EDGE — a lived contradiction, not polished positioning. Quote the creator's own words in "verbatim". Never invent numbers; only use claims present in the transcript. Reply ONLY with JSON matching exactly these keys:
+Turn the interview into a UNIQUE, brand-ready story profile. The differentiator is the creator's EDGE — a lived contradiction, not polished positioning. Quote the creator's own words in "verbatim". Never invent numbers; only use claims present in the transcript. Keep each field concise so the JSON is complete and valid. Reply ONLY with JSON matching exactly these keys:
 {"archetype":string,"positioningLine":string,"originStory":string,"transformationArc":string,"edge":string,"values":string[],"antiValues":string[],"tensions":string[],"audienceRelationship":string,"contentStyle":string,"verbatim":string[],"proofPoints":[{"claim":string,"evidence":string}],"brandFitMap":[{"category":string,"rationale":string,"congruence":"high"|"medium"|"low"}],"hardNoCategories":string[],"campaignAngles":[{"title":string,"premise":string,"format":string}],"profileBio":string,"brandNarrative":string,"pitchDM":string,"pitchEmail":string,"narrativeTags":string[],"creatorApprovalLine":string,"leadWithThis":string[],"neverSayThis":string[],"fitScore":number,"fitRationale":string,"lowSpecificity":boolean}`,
     user: `Creator: ${input.name}${input.niche ? ` (${input.niche})` : ""}
 ${input.edge ? `Confirmed edge: ${input.edge}\n` : ""}
@@ -47,20 +49,84 @@ ${transcript}`,
   });
 
   const parsed = extractJson<any>(text);
-  if (!parsed) return null;
-  // Fill required fields the model may omit, then validate.
-  const candidate = {
-    specificityNote: undefined,
-    ...parsed,
-    lowSpecificity: !!parsed.lowSpecificity,
-    fitScore: typeof parsed.fitScore === "number" ? parsed.fitScore : 60,
-    fitRationale: parsed.fitRationale || "",
-    edge: parsed.edge || input.edge || "",
-    leadWithThis: parsed.leadWithThis || [],
-    neverSayThis: parsed.neverSayThis || [],
-  };
+  if (!parsed) {
+    if (text) console.warn("[storyEngine] LLM returned unparseable JSON; using deterministic fallback.");
+    return null;
+  }
+
+  // Normalize the model's JSON so a minor omission/typo doesn't discard an otherwise
+  // good response. Missing strings become "", missing arrays become [], congruence is
+  // coerced to a valid enum, and proof statuses are validated.
+  const candidate = normalizeLlmProfile(parsed, input);
   const result = storyProfileSchema.safeParse(candidate);
-  return result.success ? result.data : null;
+  if (!result.success) {
+    console.warn(
+      "[storyEngine] LLM JSON failed validation; using deterministic fallback. Issues:",
+      result.error.issues.map((i) => i.path.join(".")).join(", "),
+    );
+    return null;
+  }
+  return result.data;
+}
+
+const VALID_STATUS = ["self-reported", "needs-proof", "verified"];
+
+function normalizeLlmProfile(parsed: any, input: GenerateInput): StoryProfile {
+  const str = (v: unknown): string => (typeof v === "string" ? v : v == null ? "" : String(v));
+  const arr = (v: unknown): any[] => (Array.isArray(v) ? v : v == null ? [] : [v]);
+  const strArr = (v: unknown): string[] => arr(v).map(str).filter(Boolean);
+  const cong = (v: unknown): "high" | "medium" | "low" => {
+    const s = str(v).toLowerCase();
+    return s === "high" || s === "low" ? s : "medium";
+  };
+
+  return {
+    archetype: str(parsed.archetype),
+    positioningLine: str(parsed.positioningLine),
+    originStory: str(parsed.originStory),
+    transformationArc: str(parsed.transformationArc),
+    edge: str(parsed.edge || input.edge),
+    values: strArr(parsed.values),
+    antiValues: strArr(parsed.antiValues),
+    tensions: strArr(parsed.tensions),
+    audienceRelationship: str(parsed.audienceRelationship),
+    contentStyle: str(parsed.contentStyle),
+    verbatim: strArr(parsed.verbatim),
+    proofPoints: arr(parsed.proofPoints)
+      .map((p: any) => ({
+        claim: str(p?.claim || p?.category || "stated"),
+        evidence: str(p?.evidence ?? p),
+        status: VALID_STATUS.includes(p?.status) ? p.status : undefined,
+      }))
+      .filter((p) => p.evidence),
+    brandFitMap: arr(parsed.brandFitMap)
+      .map((b: any) => ({
+        category: str(b?.category),
+        rationale: str(b?.rationale),
+        congruence: cong(b?.congruence),
+      }))
+      .filter((b) => b.category),
+    hardNoCategories: strArr(parsed.hardNoCategories),
+    campaignAngles: arr(parsed.campaignAngles)
+      .map((a: any) => ({
+        title: str(a?.title),
+        premise: str(a?.premise),
+        format: str(a?.format || "post"),
+      }))
+      .filter((a) => a.title),
+    profileBio: str(parsed.profileBio),
+    brandNarrative: str(parsed.brandNarrative),
+    pitchDM: str(parsed.pitchDM),
+    pitchEmail: str(parsed.pitchEmail),
+    narrativeTags: strArr(parsed.narrativeTags),
+    creatorApprovalLine: parsed.creatorApprovalLine ? str(parsed.creatorApprovalLine) : undefined,
+    leadWithThis: strArr(parsed.leadWithThis),
+    neverSayThis: strArr(parsed.neverSayThis),
+    fitScore: typeof parsed.fitScore === "number" ? parsed.fitScore : Number(parsed.fitScore) || 60,
+    fitRationale: str(parsed.fitRationale),
+    lowSpecificity: !!parsed.lowSpecificity,
+    specificityNote: parsed.specificityNote ? str(parsed.specificityNote) : undefined,
+  };
 }
 
 /* ---------------------------------------------------------------------------
