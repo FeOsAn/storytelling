@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button, Card, CardBody } from "@/components/ui";
+import { Reveal } from "@/components/Reveal";
 
 /**
  * Proof page. Rule: nothing on this page is ever manufactured. Case studies
@@ -10,6 +11,7 @@ import { Button, Card, CardBody } from "@/components/ui";
 export function Proof() {
   return (
     <div className="mx-auto max-w-3xl space-y-12 py-4">
+      <Reveal>
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">
           Proof · published as it happens
@@ -27,7 +29,9 @@ export function Proof() {
           names. If this page looks sparse, that's what honest looks like early.
         </p>
       </header>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-4">
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">
@@ -75,7 +79,9 @@ export function Proof() {
           </CardBody>
         </Card>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-4">
         <h2 className="font-serif text-2xl font-bold tracking-tight">Category teardowns</h2>
         <p className="text-sm text-muted-foreground">
@@ -93,7 +99,9 @@ export function Proof() {
           </CardBody>
         </Card>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-4">
         <h2 className="font-serif text-2xl font-bold tracking-tight">Client case studies</h2>
         <div className="rounded-lg border border-dashed border-border p-6 text-center">
@@ -106,7 +114,9 @@ export function Proof() {
           </p>
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="rounded-lg border border-primary/30 bg-primary/5 px-6 py-8 text-center">
         <h2 className="font-serif text-xl font-bold tracking-tight">
           Be the first case study — with first-cohort pricing to match.
@@ -121,6 +131,7 @@ export function Proof() {
           </Link>
         </div>
       </section>
+      </Reveal>
     </div>
   );
 }

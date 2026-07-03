@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { Button, Card, CardBody, Input } from "@/components/ui";
+import { Reveal } from "@/components/Reveal";
 
 /**
  * Free AI Visibility Audit request. Stored through the existing applications
@@ -64,6 +65,7 @@ export function Audit() {
 
   return (
     <div className="mx-auto max-w-xl space-y-6 py-4">
+      <Reveal>
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">
           Free · no pitch attached
@@ -78,7 +80,9 @@ export function Audit() {
           fixes.
         </p>
       </div>
+      </Reveal>
 
+      <Reveal delay={120}>
       <Card>
         <CardBody className="space-y-3">
           <div className="space-y-1">
@@ -146,6 +150,7 @@ export function Audit() {
           </p>
         </CardBody>
       </Card>
+      </Reveal>
     </div>
   );
 }

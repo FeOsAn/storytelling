@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { Button, Card, CardBody } from "@/components/ui";
+import { Reveal } from "@/components/Reveal";
 
 /**
  * Public measurement methodology. This page exists because AI answers are
@@ -9,6 +10,7 @@ import { Button, Card, CardBody } from "@/components/ui";
 export function Methodology() {
   return (
     <div className="mx-auto max-w-3xl space-y-12 py-4">
+      <Reveal>
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">
           Methodology · public &amp; held against us
@@ -23,7 +25,9 @@ export function Methodology() {
           day 60 — and every case study we publish has it attached.
         </p>
       </header>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-4">
         <h2 className="font-serif text-2xl font-bold tracking-tight">The protocol</h2>
         <div className="grid gap-3">
@@ -58,7 +62,9 @@ export function Methodology() {
           ))}
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-4">
         <h2 className="font-serif text-2xl font-bold tracking-tight">
           What can actually be influenced — and how fast
@@ -104,7 +110,9 @@ export function Methodology() {
           </Card>
         </div>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-3">
         <h2 className="font-serif text-2xl font-bold tracking-tight">What we never promise</h2>
         <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
@@ -123,7 +131,9 @@ export function Methodology() {
           </li>
         </ul>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="space-y-3">
         <h2 className="font-serif text-2xl font-bold tracking-tight">One caveat we volunteer</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
@@ -134,7 +144,9 @@ export function Methodology() {
           mention this difference are measuring something other than what your buyers see.
         </p>
       </section>
+      </Reveal>
 
+      <Reveal>
       <section className="rounded-lg border border-primary/30 bg-primary/5 px-6 py-8 text-center">
         <h2 className="font-serif text-xl font-bold tracking-tight">
           The audit runs on this exact protocol. Free.
@@ -145,6 +157,7 @@ export function Methodology() {
           </Link>
         </div>
       </section>
+      </Reveal>
     </div>
   );
 }
