@@ -5,57 +5,57 @@
 /* HSL theme tokens consumed by tailwind.config.ts (hsl(var(--x))). */
 :root {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-serif: ui-serif, Georgia, serif;
+  --font-serif: "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --background: 40 30% 98%;
-  --foreground: 20 14% 10%;
-  --border: 30 12% 88%;
-  --input: 30 12% 88%;
+  --background: 75 20% 98%;
+  --foreground: 165 12% 9%;
+  --border: 75 10% 87%;
+  --input: 75 10% 87%;
 
   --card: 0 0% 100%;
-  --card-foreground: 20 14% 10%;
-  --card-border: 30 12% 90%;
+  --card-foreground: 165 12% 9%;
+  --card-border: 75 10% 89%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 20 14% 10%;
-  --popover-border: 30 12% 90%;
+  --popover-foreground: 165 12% 9%;
+  --popover-border: 75 10% 89%;
 
-  --primary: 18 88% 48%;
-  --primary-foreground: 40 30% 98%;
-  --primary-border: hsl(18 88% 40%);
+  --primary: 161 68% 24%;
+  --primary-foreground: 75 20% 98%;
+  --primary-border: hsl(161 68% 18%);
 
-  --secondary: 30 20% 94%;
-  --secondary-foreground: 20 14% 16%;
-  --secondary-border: hsl(30 12% 86%);
+  --secondary: 75 16% 93%;
+  --secondary-foreground: 165 12% 14%;
+  --secondary-border: hsl(75 10% 85%);
 
-  --muted: 30 16% 95%;
-  --muted-foreground: 25 8% 42%;
-  --muted-border: hsl(30 12% 88%);
+  --muted: 75 14% 94%;
+  --muted-foreground: 160 6% 40%;
+  --muted-border: hsl(75 10% 87%);
 
-  --accent: 200 70% 45%;
+  --accent: 27 82% 44%;
   --accent-foreground: 0 0% 100%;
-  --accent-border: hsl(200 70% 38%);
+  --accent-border: hsl(27 82% 37%);
 
   --destructive: 0 72% 48%;
   --destructive-foreground: 0 0% 100%;
   --destructive-border: hsl(0 72% 40%);
 
-  --ring: 18 88% 48%;
+  --ring: 161 68% 24%;
 
-  --chart-1: 18 88% 48%;
-  --chart-2: 200 70% 45%;
-  --chart-3: 150 50% 40%;
-  --chart-4: 45 90% 50%;
-  --chart-5: 280 50% 55%;
+  --chart-1: 161 68% 28%;
+  --chart-2: 27 82% 44%;
+  --chart-3: 200 60% 42%;
+  --chart-4: 45 85% 48%;
+  --chart-5: 280 40% 52%;
 
-  --sidebar: 30 20% 96%;
-  --sidebar-foreground: 20 14% 12%;
-  --sidebar-border: 30 12% 88%;
-  --sidebar-ring: 18 88% 48%;
-  --sidebar-primary: 18 88% 48%;
-  --sidebar-primary-foreground: 40 30% 98%;
-  --sidebar-accent: 200 70% 45%;
+  --sidebar: 75 16% 95%;
+  --sidebar-foreground: 165 12% 11%;
+  --sidebar-border: 75 10% 87%;
+  --sidebar-ring: 161 68% 24%;
+  --sidebar-primary: 161 68% 24%;
+  --sidebar-primary-foreground: 75 20% 98%;
+  --sidebar-accent: 27 82% 44%;
   --sidebar-accent-foreground: 0 0% 100%;
 }
 

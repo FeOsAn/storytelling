@@ -15,7 +15,7 @@ export function Intake() {
   const [name, setName] = useState("");
   const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
-  const [niche, setNiche] = useState("fitness");
+  const [niche, setNiche] = useState("");
   const [creatorId, setCreatorId] = useState<string>("");
 
   // interview
@@ -151,25 +151,32 @@ export function Intake() {
   if (phase === "apply") {
     return (
       <div className="mx-auto max-w-lg space-y-4">
-        <h1 className="text-2xl font-bold">Start your story profile</h1>
+        <h1 className="font-serif text-3xl font-bold tracking-tight">
+          The narrative-extraction interview
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Six questions, adaptive. We&apos;ll hunt for your edge, then reflect it back for you to own.
+          Six questions, adaptive, with pushback. We hunt for the edge only your firm can claim —
+          then reflect it back for you to own, sharpen, or reject. This is the raw material the AI
+          needs before it can recommend you.
         </p>
         <Card>
           <CardBody className="space-y-3">
-            <Input placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
-            <Input placeholder="@handle" value={handle} onChange={(e) => setHandle(e.target.value)} />
-            <Input placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <select
-              className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
+            <Input
+              placeholder="Your name (the founder / partner talking)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Input
+              placeholder="Firm or website"
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+            />
+            <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              placeholder="What you sell, to whom — e.g. GTM consulting for fintechs"
               value={niche}
               onChange={(e) => setNiche(e.target.value)}
-            >
-              <option value="endurance">Endurance</option>
-              <option value="strength">Strength</option>
-              <option value="wellness">Wellness</option>
-              <option value="fitness">Fitness (general)</option>
-            </select>
+            />
             <Button onClick={startApplication} disabled={busy || !name.trim()}>
               {busy ? "Starting…" : "Begin interview"}
             </Button>
@@ -180,7 +187,7 @@ export function Intake() {
   }
 
   if (phase === "generating") {
-    return <p className="text-muted-foreground">Generating your brand-ready story profile…</p>;
+    return <p className="text-muted-foreground">Generating your narrative profile…</p>;
   }
 
   if (phase === "edge") {

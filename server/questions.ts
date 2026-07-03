@@ -25,10 +25,10 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Origin",
     chapter: "Foundation",
     prompt:
-      "Take me back to before any of this. What were you actually living through when you started — not the highlight reel, the real part?",
+      "Take me back to before the firm existed. What were you actually living through when you decided to start it — not the About-page version, the real part?",
     followUps: [
       "What did you believe about yourself back then that you don't believe now?",
-      "What's the part of that story you usually leave out?",
+      "What's the part of the founding story you leave off the website?",
     ],
   },
   {
@@ -36,9 +36,9 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Origin",
     chapter: "Foundation",
     prompt:
-      "What was the lowest point or the turn — the moment things could have gone the other way? What pulled you through?",
+      "What was the lowest point — the client, the quarter, the moment it nearly went the other way? What pulled you through?",
     followUps: [
-      "What did that cost you that people don't see?",
+      "What did that cost you that clients never see?",
       "Who was in the room when it turned, and why did that matter?",
     ],
   },
@@ -47,10 +47,10 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Audience",
     chapter: "Foundation",
     prompt:
-      "Picture the one person who DMs you at 11pm. Who are they, and what do they trust you for that they trust nobody else for?",
+      "Picture the client who calls you at 9pm in a panic. Who are they, and what do they trust you with that they trust nobody else with?",
     followUps: [
-      "What do you give them that the big accounts won't?",
-      "What do they ask you for that you refuse to give?",
+      "What do you give them that the big firms won't?",
+      "What do they ask for that you refuse to sell them?",
     ],
   },
   {
@@ -58,10 +58,10 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Values",
     chapter: "Edge",
     prompt:
-      "What's the hill you'll die on — the thing you'll say even when it costs you deals? And what will you never, ever be associated with?",
+      "What's the hill this firm dies on — the advice you give even when it costs you the engagement? And what work will you never take?",
     followUps: [
-      "Where do you contradict yourself on this — the part that's messy and true?",
-      "When did holding that line actually cost you something?",
+      "Where do you contradict yourselves on this — the part that's messy and true?",
+      "When did holding that line actually cost you revenue?",
     ],
   },
   {
@@ -69,10 +69,10 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Proof",
     chapter: "Proof & Fit",
     prompt:
-      "What are the receipts — the concrete things you've done or built that prove this is real? Numbers, credentials, results, all of it.",
+      "What are the receipts — outcomes, numbers, names you can use, credentials? The concrete things that prove this isn't marketing.",
     followUps: [
       "Which result are you proudest of that you can't put a number on?",
-      "What's the one claim here you'd want a brand to be able to verify?",
+      "What's the one claim here you'd want a prospect to be able to verify?",
     ],
   },
   {
@@ -80,10 +80,10 @@ export const QUESTION_BANK: QuestionNode[] = [
     stage: "Commercial Fit",
     chapter: "Proof & Fit",
     prompt:
-      "What kind of brand would you genuinely be proud to work with — and what would you turn down even for good money?",
+      "Describe the client you'd be genuinely proud to win — and the engagement you'd turn down even at full rate.",
     followUps: [
-      "If budget were unlimited, what collab would make you proud?",
-      "What category would you never touch, no matter the offer?",
+      "If fees were no object, what work would you do more of?",
+      "What kind of client would you never take, no matter the money?",
     ],
   },
 ];
@@ -179,8 +179,8 @@ export async function generateFollowUpSmart(input: {
 
   const llm = await complete({
     system:
-      "You are a sharp, warm story interviewer for creators. Given an answer, ask ONE short follow-up (max 25 words) that surfaces the uncomfortable, specific contradiction they live — the 'part they don't say'. Never generic. Reply ONLY as JSON: {\"followUp\":\"...\"}.",
-    user: `Question: ${node?.prompt || input.questionId}\nCreator: ${input.name || "creator"} (${input.niche || "fitness"})\nAnswer: ${input.answer}\nWhy we probe: ${evaln.reason}`,
+      "You are a sharp, warm narrative interviewer for founders and expert firms. Given an answer, ask ONE short follow-up (max 25 words) that surfaces the uncomfortable, specific contradiction they live — the 'part they don't put on the website'. Never generic. Reply ONLY as JSON: {\"followUp\":\"...\"}.",
+    user: `Question: ${node?.prompt || input.questionId}\nFounder: ${input.name || "founder"} (${input.niche || "expert firm"})\nAnswer: ${input.answer}\nWhy we probe: ${evaln.reason}`,
     maxTokens: 200,
   });
   const parsed = extractJson<{ followUp: string }>(llm);
@@ -201,7 +201,7 @@ export async function inferEdgeSmart(turns: IntakeTurn[]): Promise<{ edge: strin
 
   const llm = await complete({
     system:
-      "You extract a creator's EDGE: the single lived contradiction that makes them hard to copy and valuable to brands. Reflect it back in ONE sentence they can own, refine, or reject. Be specific to their words. Reply ONLY as JSON: {\"edge\":\"...\"}.",
+      "You extract a firm's EDGE: the single lived contradiction that makes them hard to copy and worth recommending. Reflect it back in ONE sentence the founder can own, refine, or reject. Be specific to their words. Reply ONLY as JSON: {\"edge\":\"...\"}.",
     user: transcript,
     maxTokens: 200,
   });

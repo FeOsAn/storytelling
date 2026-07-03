@@ -28,10 +28,12 @@ export function Admin() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Cohort directory</h1>
+      <h1 className="font-serif text-2xl font-bold tracking-tight">Client pipeline</h1>
       {creators.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No creators yet. <Link href="/intake" className="text-primary">Run the interview</Link> to add one.
+          No clients yet. Audit requests land here, and{" "}
+          <Link href="/intake" className="text-primary">the narrative interview</Link> adds sprint
+          clients.
         </p>
       )}
       <div className="grid gap-3">

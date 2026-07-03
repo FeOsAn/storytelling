@@ -39,8 +39,8 @@ async function tryLlmProfile(input: GenerateInput): Promise<StoryProfile | null>
     // A full profile with rich prose needs headroom — too small a budget truncates
     // the JSON and the whole response is silently discarded.
     maxTokens: 8000,
-    system: `You are StoryFit, a brand-story strategist for fitness/wellness/performance creators.
-Turn the interview into a UNIQUE, brand-ready story profile. The differentiator is the creator's EDGE — a lived contradiction, not polished positioning. Quote the creator's own words in "verbatim". Never invent numbers; only use claims present in the transcript. Keep each field concise so the JSON is complete and valid. Reply ONLY with JSON matching exactly these keys:
+    system: `You are Cited, a strategic-narrative engine for founders and expert B2B firms.
+Turn the interview into a UNIQUE, client-ready narrative profile — the story an AI assistant would need in order to recommend this firm by name. The differentiator is the firm's EDGE — a lived contradiction, not polished positioning. Quote the founder's own words in "verbatim". Treat brandFitMap as the map of client/partner categories this firm fits. Never invent numbers; only use claims present in the transcript. Keep each field concise so the JSON is complete and valid. Reply ONLY with JSON matching exactly these keys:
 {"archetype":string,"positioningLine":string,"originStory":string,"transformationArc":string,"edge":string,"values":string[],"antiValues":string[],"tensions":string[],"audienceRelationship":string,"contentStyle":string,"verbatim":string[],"proofPoints":[{"claim":string,"evidence":string}],"brandFitMap":[{"category":string,"rationale":string,"congruence":"high"|"medium"|"low"}],"hardNoCategories":string[],"campaignAngles":[{"title":string,"premise":string,"format":string}],"profileBio":string,"brandNarrative":string,"pitchDM":string,"pitchEmail":string,"narrativeTags":string[],"creatorApprovalLine":string,"leadWithThis":string[],"neverSayThis":string[],"fitScore":number,"fitRationale":string,"lowSpecificity":boolean}`,
     user: `Creator: ${input.name}${input.niche ? ` (${input.niche})` : ""}
 ${input.edge ? `Confirmed edge: ${input.edge}\n` : ""}
@@ -174,20 +174,20 @@ function deterministicProfile(input: GenerateInput): StoryProfile {
   return {
     archetype: nicheArchetype(niche),
     positioningLine: edge,
-    originStory: origin || "The creator's origin, in their own words, was not captured in detail.",
+    originStory: origin || "The founding story, in their own words, was not captured in detail.",
     transformationArc: [firstSentence(origin), firstSentence(values)].filter(Boolean).join(" → ") ||
       "From lived struggle to a specific, defensible point of view.",
     edge,
     values: sentences(values, 2),
     antiValues: hardNos.slice(0, 3),
     tensions: [edge].filter(Boolean),
-    audienceRelationship: audience || "A specific audience that trusts this creator for candor over polish.",
-    contentStyle: "Candid, specific, unpolished — the anti-highlight-reel.",
+    audienceRelationship: audience || "A specific client who trusts this firm for candor over polish.",
+    contentStyle: "Candid, specific, unpolished — the anti-brochure.",
     verbatim,
     proofPoints,
     brandFitMap: loved.map((c) => ({
       category: c,
-      rationale: `Named as a category the creator would be proud to work with.`,
+      rationale: `Named as a category the firm would be proud to work with.`,
       congruence: "high" as const,
     })),
     hardNoCategories: hardNos,
@@ -195,14 +195,14 @@ function deterministicProfile(input: GenerateInput): StoryProfile {
       {
         title: "Lead with the edge",
         premise: edge,
-        format: "Founder-voice short film + carousel",
+        format: "Founder-voice essay + answer-shaped comparison page",
       },
     ],
     profileBio: buildBio(name, niche, edge, audience),
     brandNarrative: [origin, values].filter(Boolean).map(firstSentence).join(" "),
     pitchDM: `Hi — ${name} here. ${edge} If that fits what you're building, I'd love to talk.`,
     pitchEmail: `Subject: A partnership that leads with substance\n\n${buildBio(name, niche, edge, audience)}\n\nHappy to share the full story profile.`,
-    narrativeTags: [niche || "fitness", "edge-first", "brand-safe"],
+    narrativeTags: [niche || "specialist", "edge-first", "citation-ready"],
     creatorApprovalLine: edge,
     leadWithThis: [],
     neverSayThis: [],
@@ -214,6 +214,10 @@ function deterministicProfile(input: GenerateInput): StoryProfile {
 
 function nicheArchetype(niche?: string): string {
   const n = (niche || "").toLowerCase();
+  if (n.includes("consult") || n.includes("advis")) return "The Straight-Answer Firm";
+  if (n.includes("legal") || n.includes("law")) return "The Plain-English Counsel";
+  if (n.includes("financ") || n.includes("cfo") || n.includes("account")) return "The Numbers Translator";
+  if (n.includes("recruit") || n.includes("talent")) return "The Specialist Matchmaker";
   if (n.includes("endur")) return "The Durable Guide";
   if (n.includes("strength")) return "The Honest Builder";
   if (n.includes("well")) return "The Grounded Practitioner";
@@ -221,8 +225,8 @@ function nicheArchetype(niche?: string): string {
 }
 
 function buildBio(name: string, niche: string | undefined, edge: string, audience: string): string {
-  const who = audience ? firstSentence(audience) : "a specific audience that trusts candor over polish";
-  return `${name} is a ${niche || "fitness"} creator whose edge is simple and hard to copy: ${edge} They show up for ${who}`;
+  const who = audience ? firstSentence(audience) : "clients who value candor over polish";
+  return `${name} is a ${niche || "specialist"} firm whose edge is simple and hard to copy: ${edge} They show up for ${who}`;
 }
 
 function extractHardNos(text: string): string[] {

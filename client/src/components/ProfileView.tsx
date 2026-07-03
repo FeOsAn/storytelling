@@ -116,7 +116,7 @@ export function ProfileView({
             </ul>
           </Section>
 
-          <Section title="Brand-fit map">
+          <Section title="Client-fit map">
             <div className="grid gap-2 sm:grid-cols-2">
               {profile.brandFitMap.map((b, i) => (
                 <div key={i} className="rounded-md border border-border p-3">
@@ -148,7 +148,7 @@ export function ProfileView({
           <Section title="Bio">
             <p className="text-sm">{profile.profileBio}</p>
           </Section>
-          <Section title="Brand narrative">
+          <Section title="Outbound narrative">
             <p className="text-sm">{profile.brandNarrative}</p>
           </Section>
           <Section title="Pitch — DM">

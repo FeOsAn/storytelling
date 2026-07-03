@@ -39,7 +39,7 @@ export function Profile() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" onClick={() => setBrandFacing((b) => !b)}>
-            {brandFacing ? "Creator view" : "Brand-facing view"}
+            {brandFacing ? "Internal view" : "Client-facing view"}
           </Button>
           {data.approved ? <Badge tone="accent">approved</Badge> : <Button onClick={approve}>Approve</Button>}
         </div>

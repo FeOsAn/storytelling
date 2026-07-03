@@ -1,15 +1,20 @@
-# StoryFit
+# Cited (formerly StoryFit)
 
-An AI story agent for fitness / wellness / performance creators. A creator talks or types
-through a short adaptive interview; StoryFit turns the conversation into a **unique,
-brand-ready story profile** — origin story, transformation arc, values, anti-values, tensions,
-proof points, brand-fit map, hard-no categories, campaign angles, bio, brand-facing narrative,
-and pitch templates.
+**The narrative-to-AI-answer studio.** Buyers now ask ChatGPT, Perplexity and Claude who to
+hire; the models recommend two or three firms by name. Cited extracts the true story of an
+expert firm through an adaptive interview, translates it into the answer-shaped narrative the
+models need, and proves the lift with a share-of-voice before/after.
 
-**Thesis:** *Creators are more than their follower count.* The differentiator that wins brand
-deals is a specific, hard-to-copy **edge** — usually an uncomfortable contradiction the creator
-lives. The product extracts that edge through pushback, confirms it with the creator, and
-packages it as commercial ammunition without overclaiming unverified numbers.
+**Thesis:** *AI is the new referral engine — and to a language model, generic is invisible.*
+The differentiator that gets a firm cited is a specific, hard-to-copy **edge** — usually an
+uncomfortable contradiction the founders live. The engine extracts that edge through pushback,
+confirms it with the founder, and packages it without overclaiming unverified numbers.
+
+The site ships a marketing landing (`/`), a free **AI Visibility Audit** request flow
+(`/audit`), the narrative-extraction interview (`/intake`), generated narrative profiles
+(`/profile/:id`), and an operator pipeline (`/admin`). The underlying engine is the StoryFit
+narrative-extraction stack described below — same contracts, repointed at founders and expert
+firms.
 
 > **Provenance:** this repo was reconstructed from the original StoryFit handoff spec plus a set
 > of salvaged source files (`tailwind.config.ts`, `script/build.ts`, `script/qa/*`). The
