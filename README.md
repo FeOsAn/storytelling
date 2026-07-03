@@ -78,14 +78,32 @@ npm run qa:brand# 2-persona commercial sim (needs a running server; SIM_BASE)
 npm run db:push # drizzle-kit push
 ```
 
-## Deploy
+## Deploy (Railway — recommended)
+
+The repo ships a multi-stage `Dockerfile` and `railway.json` (health check on
+`/api/health`, single replica — required for SQLite).
+
+1. [railway.app](https://railway.app) → New Project → **Deploy from GitHub repo** →
+   pick this repo (`main`). The Dockerfile is detected automatically.
+2. Service → **Variables**: set `STORYFIT_DB=/data/data.db`, `ANTHROPIC_API_KEY=<key>`
+   (optional — deterministic engine without it).
+3. Service → **Volumes**: add a volume mounted at `/data` (this is the database;
+   without it, data is wiped on every deploy).
+4. Service → **Settings → Networking**: Generate Domain (instant `*.up.railway.app`
+   URL), or add your custom domain and set the CNAME it shows you.
+5. Verify: `https://<domain>/api/health` → `{"ok":true,"engine":"llm:claude"}`.
+
+Every push to `main` redeploys. Keep it to one replica.
+
+### Manual / other hosts
 
 ```bash
 npm run build
-# the deploy sandbox holds port 5000; run on 5001 (kill any stale listener first):
-lsof -ti:5001 | xargs -r kill
-PORT=5001 NODE_ENV=production node dist/index.cjs
+STORYFIT_DB=/path/to/persistent/data.db PORT=8080 NODE_ENV=production node dist/index.cjs
 ```
+
+Any Node host works if it has a persistent disk for the SQLite file. (Legacy note: the
+original Perplexity sandbox ran on port 5001 behind a proxy — see the token note below.)
 
 `client/src/lib/queryClient.ts` contains the literal placeholder `__PORT_5001__`. At deploy the
 `deploy_website` step rewrites it to the proxy path so the built client calls the backend.
