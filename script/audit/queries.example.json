@@ -1,0 +1,11 @@
+{
+  "queries": [
+    "Who are the best consultancies for getting a B2B firm recommended by AI assistants like ChatGPT?",
+    "Best generative engine optimization agency for professional-services firms",
+    "How do I show up when buyers ask ChatGPT for the best consultancy in my field? Who can help?",
+    "Who offers an AI visibility audit for consultancies?",
+    "Alternatives to doing generative engine optimization in-house"
+  ],
+  "firms": ["Cited", "Profound", "Scrunch", "Evertune", "Writesonic"],
+  "runs": 3
+}

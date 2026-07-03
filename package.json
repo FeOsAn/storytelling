@@ -9,6 +9,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc --noEmit",
+    "audit": "tsx script/audit/run.ts",
     "qa": "tsx script/qa/run.ts",
     "qa:brand": "tsx script/qa/sim-commercial.ts",
     "db:push": "drizzle-kit push"

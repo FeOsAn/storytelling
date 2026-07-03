@@ -3,6 +3,8 @@ import { useHashLocation } from "wouter/use-hash-location";
 import { Router } from "wouter";
 import { Home } from "@/pages/Home";
 import { Audit } from "@/pages/Audit";
+import { Methodology } from "@/pages/Methodology";
+import { Proof } from "@/pages/Proof";
 import { Intake } from "@/pages/Intake";
 import { Profile } from "@/pages/Profile";
 import { Admin } from "@/pages/Admin";
@@ -32,6 +34,8 @@ function Nav() {
         </Link>
         <nav className="flex items-center gap-5">
           {link("/", "Home")}
+          {link("/proof", "Proof")}
+          {link("/methodology", "Methodology")}
           <Link
             href="/audit"
             className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
@@ -73,6 +77,8 @@ export function App() {
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/audit" component={Audit} />
+            <Route path="/methodology" component={Methodology} />
+            <Route path="/proof" component={Proof} />
             <Route path="/intake" component={Intake} />
             <Route path="/profile/:id" component={Profile} />
             <Route path="/admin" component={Admin} />

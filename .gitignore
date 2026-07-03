@@ -20,3 +20,4 @@ script/qa/last-report.json
 # misc
 .DS_Store
 *.log
+script/audit/last-audit.json

@@ -57,18 +57,18 @@ export function Home() {
       <section className="grid items-center gap-10 pt-6 md:grid-cols-[1.15fr_1fr]">
         <div className="space-y-5">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-            AI is the new referral engine
+            AI is becoming the new referral engine
           </p>
           <h1 className="font-serif text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-            Your buyers now ask AI who to hire.
+            When your buyers ask AI who to hire, three names come back.
             <br />
-            <span className="text-primary">What does it answer about you?</span>
+            <span className="text-primary">Is yours one of them?</span>
           </h1>
           <p className="max-w-xl text-lg text-muted-foreground">
-            When a prospect asks ChatGPT, Perplexity or Claude for the best firm in your field, it
-            recommends two or three names — with reasons. Cited extracts the true story of your
-            firm, plants it where the models look, and proves the lift with a 30-day
-            before/after.
+            A growing share of B2B buyers check ChatGPT, Perplexity or Claude before they
+            shortlist. Cited measures what the engines actually say about your category — run by
+            run, engine by engine — then shifts the odds with the story only your firm can tell,
+            and re-measures with the same protocol. No rank promises. Provable movement.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/audit">
@@ -103,7 +103,11 @@ export function Home() {
             </div>
             <p className="border-t border-border pt-3 text-xs text-muted-foreground">
               This is what invisibility looks like. Your audit fills this chart with real runs for
-              your firm and your actual competitors.
+              your firm and your actual competitors — every query run multiple times, variance
+              reported.{" "}
+              <Link href="/methodology" className="font-medium text-primary hover:underline">
+                How we measure →
+              </Link>
             </p>
           </CardBody>
         </Card>
@@ -173,6 +177,56 @@ export function Home() {
         </div>
       </section>
 
+      {/* The honest guarantee */}
+      <section className="space-y-6">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Straight answer
+          </p>
+          <h2 className="font-serif text-2xl font-bold tracking-tight">
+            Can anyone guarantee you a top-3 AI answer? No. Here's the closest honest thing.
+          </h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-[1fr_1.4fr]">
+          <Card className="border-accent/40">
+            <CardBody className="space-y-2">
+              <h3 className="font-semibold">What nobody can promise</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Closed AI models are probabilistic: answers vary run to run, differ between users,
+                and shift with every model update. A vendor who guarantees you a ranking is either
+                lying or doesn't understand the systems — which is worth knowing when you compare
+                us to anyone else.
+              </p>
+            </CardBody>
+          </Card>
+          <Card>
+            <CardBody className="space-y-3">
+              <h3 className="font-semibold">What we put our fee behind instead</h3>
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
+                <li>
+                  <strong className="text-foreground">1 · You see real data before you pay.</strong>{" "}
+                  The free audit is your category's actual answers — if AI isn't recommending
+                  anyone in your space yet, the audit says that too.
+                </li>
+                <li>
+                  <strong className="text-foreground">2 · Protocol-grade measurement.</strong>{" "}
+                  Every query run multiple times, fresh sessions, four engines, frequencies with
+                  variance — not one lucky screenshot.{" "}
+                  <Link href="/methodology" className="font-medium text-primary hover:underline">
+                    The protocol is public →
+                  </Link>
+                </li>
+                <li>
+                  <strong className="text-foreground">3 · The 60-day movement clause.</strong>{" "}
+                  Retainers are month-to-month. If your measured share of answers hasn't moved by
+                  day 60, you walk. Our fee sits behind the movement, not the promise.
+                </li>
+              </ul>
+            </CardBody>
+          </Card>
+        </div>
+      </section>
+
       {/* Offer */}
       <section className="space-y-6">
         <div className="space-y-2">
@@ -231,6 +285,7 @@ export function Home() {
                 <li>Narrative &amp; content iteration as competitors move</li>
                 <li>New placement outreach</li>
                 <li>Quarterly re-audit against your buyers' queries</li>
+                <li>Month-to-month, with the 60-day movement clause</li>
               </ul>
               <Link href="/audit">
                 <Button variant="secondary" className="w-full">
