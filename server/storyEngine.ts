@@ -40,8 +40,14 @@ async function tryLlmProfile(input: GenerateInput): Promise<StoryProfile | null>
     // the JSON and the whole response is silently discarded.
     maxTokens: 8000,
     system: `You are Cited, a strategic-narrative engine for founders and expert B2B firms.
-Turn the interview into a UNIQUE, client-ready narrative profile — the story an AI assistant would need in order to recommend this firm by name. The differentiator is the firm's EDGE — a lived contradiction, not polished positioning. Quote the founder's own words in "verbatim". Treat brandFitMap as the map of client/partner categories this firm fits. Never invent numbers; only use claims present in the transcript. Keep each field concise so the JSON is complete and valid. Reply ONLY with JSON matching exactly these keys:
-{"archetype":string,"positioningLine":string,"originStory":string,"transformationArc":string,"edge":string,"values":string[],"antiValues":string[],"tensions":string[],"audienceRelationship":string,"contentStyle":string,"verbatim":string[],"proofPoints":[{"claim":string,"evidence":string}],"brandFitMap":[{"category":string,"rationale":string,"congruence":"high"|"medium"|"low"}],"hardNoCategories":string[],"campaignAngles":[{"title":string,"premise":string,"format":string}],"profileBio":string,"brandNarrative":string,"pitchDM":string,"pitchEmail":string,"narrativeTags":string[],"creatorApprovalLine":string,"leadWithThis":string[],"neverSayThis":string[],"fitScore":number,"fitRationale":string,"lowSpecificity":boolean}`,
+Turn the interview into a UNIQUE, client-ready narrative profile — the story an AI assistant would need in order to recommend this firm by name. The differentiator is the firm's EDGE — a lived contradiction, not polished positioning. Quote the founder's own words in "verbatim". Treat brandFitMap as the map of client/partner categories this firm fits. Never invent numbers; only use claims present in the transcript.
+The marketing-playbook fields direct the client's whole marketing team:
+- entityLine: ONE sentence describing the firm, specific enough that an AI could recommend them from it alone; to be repeated verbatim everywhere.
+- targetQueries: 7-9 questions this firm's buyers would ask an AI assistant, tiered — 2 "head" (broad category), 4-5 "intent" (specific use-case, where this narrative wins), 2 "comparison" ("[competitor/category] alternatives").
+- plantPlan: 5 concrete first placements for this narrative (specific page types, community answers, directory entries, one PR/podcast angle) — actions, not platitudes.
+pitchDM and pitchEmail are OUTBOUND messages written in the founder's voice TO a prospective client (never address the founder themselves). fitScore is an integer from 0 to 100.
+Keep each field concise so the JSON is complete and valid. Reply ONLY with JSON matching exactly these keys:
+{"archetype":string,"positioningLine":string,"originStory":string,"transformationArc":string,"edge":string,"values":string[],"antiValues":string[],"tensions":string[],"audienceRelationship":string,"contentStyle":string,"verbatim":string[],"proofPoints":[{"claim":string,"evidence":string}],"brandFitMap":[{"category":string,"rationale":string,"congruence":"high"|"medium"|"low"}],"hardNoCategories":string[],"campaignAngles":[{"title":string,"premise":string,"format":string}],"profileBio":string,"brandNarrative":string,"pitchDM":string,"pitchEmail":string,"narrativeTags":string[],"creatorApprovalLine":string,"leadWithThis":string[],"neverSayThis":string[],"fitScore":number,"fitRationale":string,"lowSpecificity":boolean,"entityLine":string,"targetQueries":[{"tier":"head"|"intent"|"comparison","query":string}],"plantPlan":string[]}`,
     user: `Creator: ${input.name}${input.niche ? ` (${input.niche})` : ""}
 ${input.edge ? `Confirmed edge: ${input.edge}\n` : ""}
 Transcript:
@@ -122,11 +128,34 @@ function normalizeLlmProfile(parsed: any, input: GenerateInput): StoryProfile {
     creatorApprovalLine: parsed.creatorApprovalLine ? str(parsed.creatorApprovalLine) : undefined,
     leadWithThis: strArr(parsed.leadWithThis),
     neverSayThis: strArr(parsed.neverSayThis),
-    fitScore: typeof parsed.fitScore === "number" ? parsed.fitScore : Number(parsed.fitScore) || 60,
+    fitScore: normalizeFitScore(parsed.fitScore),
     fitRationale: str(parsed.fitRationale),
     lowSpecificity: !!parsed.lowSpecificity,
     specificityNote: parsed.specificityNote ? str(parsed.specificityNote) : undefined,
+    entityLine: parsed.entityLine ? str(parsed.entityLine) : undefined,
+    targetQueries: Array.isArray(parsed.targetQueries)
+      ? parsed.targetQueries
+          .map((q: any) => ({
+            tier: ["head", "intent", "comparison"].includes(q?.tier) ? q.tier : "intent",
+            query: str(q?.query ?? q),
+          }))
+          .filter((q: any) => q.query)
+      : undefined,
+    plantPlan: Array.isArray(parsed.plantPlan) ? strArr(parsed.plantPlan) : undefined,
   };
+}
+
+/**
+ * Models occasionally return fitScore on a 0–10 or 0–1 scale despite the
+ * prompt. A "specific, verifiable" profile scoring 8/100 is a scale slip, not
+ * a judgement — rescale instead of trusting it literally.
+ */
+function normalizeFitScore(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 60;
+  if (n > 0 && n <= 1) return Math.round(n * 100);
+  if (n > 1 && n <= 10) return Math.round(n * 10);
+  return Math.round(n);
 }
 
 /* ---------------------------------------------------------------------------
@@ -209,6 +238,21 @@ function deterministicProfile(input: GenerateInput): StoryProfile {
     fitScore: 60,
     fitRationale: "",
     lowSpecificity: false,
+    entityLine: `${name} — ${niche || "a specialist firm"} whose edge is: ${firstSentence(edge)}`,
+    targetQueries: [
+      { tier: "head" as const, query: `best ${niche || "specialist"} firm` },
+      { tier: "head" as const, query: `who should I hire for ${niche || "this kind of work"}?` },
+      { tier: "intent" as const, query: `${niche || "specialist"} for founder-led companies` },
+      { tier: "intent" as const, query: `${niche || "specialist"} who ${firstSentence(edge).toLowerCase().replace(/\.$/, "")}` },
+      { tier: "comparison" as const, query: `alternatives to large ${niche || "consulting"} firms` },
+    ],
+    plantPlan: [
+      "Publish an honest comparison page: you vs. the two firms buyers shortlist you against, with verifiable numbers.",
+      "Rewrite the homepage first paragraph to the entity line, verbatim.",
+      "Answer the three most-asked buyer questions in the community your buyers actually use, under the founder's real name.",
+      "Update the firm's entry on the vertical's main directory to match the entity line.",
+      "Pitch one trade-press or podcast appearance built on the edge, carrying one verified statistic.",
+    ],
   };
 }
 

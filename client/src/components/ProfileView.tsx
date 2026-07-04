@@ -1,5 +1,34 @@
+import { useState } from "react";
 import type { StoryProfile } from "@/lib/types";
-import { Badge, Card, CardBody, Section } from "@/components/ui";
+import { Badge, Button, Card, CardBody, Section } from "@/components/ui";
+
+/** Copy-to-clipboard with inline confirmation — profiles are made to be reused. */
+export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      variant="ghost"
+      className="px-2.5 py-1 text-xs"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch {
+          /* clipboard unavailable — no-op */
+        }
+      }}
+    >
+      {copied ? "✓ Copied" : label}
+    </Button>
+  );
+}
+
+const TIER_LABEL: Record<string, string> = {
+  head: "Head — the long game",
+  intent: "Buyer intent — wins first",
+  comparison: "Comparison",
+};
 
 /** Renders a generated StoryProfile — the commercial deliverable. */
 export function ProfileView({
@@ -30,6 +59,65 @@ export function ProfileView({
           )}
         </CardBody>
       </Card>
+
+      {/* Marketing playbook — what the whole team aims at. */}
+      {(profile.entityLine || profile.targetQueries?.length || profile.plantPlan?.length) && (
+        <Card className="shadow-[inset_0_1px_0_rgba(214,246,229,0.1),inset_0_0_0_1px_rgba(63,214,143,0.3),0_20px_50px_rgba(0,0,0,0.45)]">
+          <CardBody className="space-y-5">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="font-serif text-xl tracking-tight">The marketing playbook</h2>
+              <Badge tone="primary">what everything aims at</Badge>
+            </div>
+
+            {profile.entityLine && (
+              <Section title="The entity line — say it verbatim, everywhere">
+                <div className="flex items-start justify-between gap-3 rounded-lg bg-primary/[0.07] p-3">
+                  <p className="font-serif text-lg leading-snug">{profile.entityLine}</p>
+                  <CopyButton text={profile.entityLine} />
+                </div>
+              </Section>
+            )}
+
+            {profile.targetQueries && profile.targetQueries.length > 0 && (
+              <Section title="The queries this narrative is built to win">
+                <div className="space-y-2.5">
+                  {(["intent", "comparison", "head"] as const).map((tier) => {
+                    const qs = profile.targetQueries!.filter((q) => q.tier === tier);
+                    if (qs.length === 0) return null;
+                    return (
+                      <div key={tier}>
+                        <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                          {TIER_LABEL[tier]}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {qs.map((q, i) => (
+                            <span
+                              key={i}
+                              className="rounded-md bg-muted px-2.5 py-1 font-mono text-xs"
+                            >
+                              {q.query}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Section>
+            )}
+
+            {profile.plantPlan && profile.plantPlan.length > 0 && (
+              <Section title="First placements — where this story goes next">
+                <ol className="list-decimal space-y-1.5 pl-5 text-sm">
+                  {profile.plantPlan.map((p, i) => (
+                    <li key={i}>{p}</li>
+                  ))}
+                </ol>
+              </Section>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardBody className="space-y-5">
@@ -152,10 +240,20 @@ export function ProfileView({
             <p className="text-sm">{profile.brandNarrative}</p>
           </Section>
           <Section title="Pitch — DM">
-            <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{profile.pitchDM}</p>
+            <div className="rounded-md bg-muted p-3">
+              <p className="whitespace-pre-wrap text-sm">{profile.pitchDM}</p>
+              <div className="mt-2 flex justify-end">
+                <CopyButton text={profile.pitchDM} />
+              </div>
+            </div>
           </Section>
           <Section title="Pitch — email">
-            <p className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">{profile.pitchEmail}</p>
+            <div className="rounded-md bg-muted p-3">
+              <p className="whitespace-pre-wrap text-sm">{profile.pitchEmail}</p>
+              <div className="mt-2 flex justify-end">
+                <CopyButton text={profile.pitchEmail} />
+              </div>
+            </div>
           </Section>
         </CardBody>
       </Card>

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { CreatorView } from "@/lib/types";
 import { ProfileView } from "@/components/ProfileView";
+import { downloadMarkdown, profileToMarkdown } from "@/lib/exportProfile";
 import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
 
 export function Profile() {
@@ -37,7 +38,18 @@ export function Profile() {
             {data.handle} · {data.niche} · engine <span className="font-mono">{data.engine}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            onClick={() =>
+              downloadMarkdown(
+                `cited-profile-${data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`,
+                profileToMarkdown(data.name, data.profile!),
+              )
+            }
+          >
+            ↓ Export Markdown
+          </Button>
           <Button variant="ghost" onClick={() => setBrandFacing((b) => !b)}>
             {brandFacing ? "Internal view" : "Client-facing view"}
           </Button>

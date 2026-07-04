@@ -114,6 +114,7 @@ export function App() {
             <Route path="/methodology" component={Methodology} />
             <Route path="/proof" component={Proof} />
             <Route path="/intake" component={Intake} />
+            <Route path="/intake/:id" component={Intake} />
             <Route path="/profile/:id" component={Profile} />
             <Route path="/admin" component={Admin} />
             <Route>

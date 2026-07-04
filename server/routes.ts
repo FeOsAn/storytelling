@@ -206,7 +206,8 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ ok: true });
   });
 
-  // Read back exactly what a creator/brand would see.
+  // Read back exactly what a creator/brand would see. Includes saved interview
+  // turns so a half-finished interview can resume after a refresh.
   app.get("/api/creators/:id", (req, res) => {
     const creator = storage.getCreator(req.params.id);
     if (!creator) return res.status(404).json({ error: "creator not found" });
@@ -224,10 +225,12 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
       engine: getEngine(),
       profile,
       proofs: parseJson<any[]>(creator.proofsJson, []),
+      turns: parseJson<any[]>(creator.intakeJson, []),
     });
   });
 
-  // Brand/admin cohort directory.
+  // Brand/admin cohort directory. turnsCount lets the pipeline distinguish
+  // audit leads (no interview yet) from interviewed/generated clients.
   app.get("/api/admin/cohort", (_req, res) => {
     const rows = storage.listCreators().map((c) => ({
       id: c.id,
@@ -237,6 +240,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
       status: c.status,
       approved: c.approved,
       shortlisted: c.shortlisted,
+      turnsCount: parseJson<any[]>(c.intakeJson, []).length,
       profile: parseJson<StoryProfile | null>(c.profileJson, null),
     }));
     res.json({ creators: rows });

@@ -129,5 +129,15 @@ export const storyProfileSchema = z.object({
   /** Roadmap #1: set when the creator dodged repeated probes / stayed generic. */
   lowSpecificity: z.boolean(),
   specificityNote: z.string().optional(),
+
+  /* --- Marketing playbook (the "what is our marketing aimed at" layer) --- */
+  /** The one-sentence entity description to repeat verbatim everywhere the models read. */
+  entityLine: z.string().optional(),
+  /** The AI queries this narrative is built to win, tiered per the methodology. */
+  targetQueries: z
+    .array(z.object({ tier: z.enum(["head", "intent", "comparison"]), query: z.string() }))
+    .optional(),
+  /** Concrete first placement actions — where to plant the story. */
+  plantPlan: z.array(z.string()).optional(),
 });
 export type StoryProfile = z.infer<typeof storyProfileSchema>;

@@ -12,7 +12,15 @@ interface CohortRow {
   status: string;
   approved: boolean;
   shortlisted: boolean;
+  turnsCount: number;
   profile: StoryProfile | null;
+}
+
+/** Pipeline stage, so audit leads and interview clients don't blur together. */
+function stageOf(c: CohortRow): { label: string; tone: "muted" | "primary" | "accent" } {
+  if (c.profile) return { label: c.approved ? "approved" : "profile ready", tone: "accent" };
+  if (c.turnsCount > 0) return { label: "interview in progress", tone: "primary" };
+  return { label: "audit lead", tone: "muted" };
 }
 
 export function Admin() {
@@ -41,10 +49,10 @@ export function Admin() {
           <Card key={c.id}>
             <CardBody className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-semibold">{c.name}</span>
                   <Badge tone="muted">{c.niche}</Badge>
-                  <Badge tone={c.status === "approved" ? "accent" : "muted"}>{c.status}</Badge>
+                  <Badge tone={stageOf(c).tone}>{stageOf(c).label}</Badge>
                   {c.profile?.lowSpecificity && <Badge tone="destructive">low specificity</Badge>}
                   {typeof c.profile?.fitScore === "number" && (
                     <Badge tone="primary">fit {c.profile.fitScore}</Badge>
