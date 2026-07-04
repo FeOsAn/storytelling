@@ -69,11 +69,48 @@ export function Proof() {
                 ))}
               </div>
             </div>
-            <div className="rounded-md border border-dashed border-border p-4 text-center">
-              <p className="text-sm font-medium">Baseline: first protocol run pending</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Published here the day it's run — real frequencies, variance, and verbatim
-                answers, whatever they say. Re-measures every two weeks after.
+            <div className="space-y-3 rounded-md bg-white/[0.03] p-4 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.1)]">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-sm font-medium">Baseline #1 — 4 July 2026</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  Claude (claude-sonnet-5, API) · 5 queries × 3 runs
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                {[
+                  ["Cited (us)", 0],
+                  ["Profound", 1],
+                  ["Scrunch", 0],
+                  ["Evertune", 0],
+                  ["Writesonic", 0],
+                ].map(([nm, v]) => (
+                  <div key={nm as string} className="grid grid-cols-[8rem_1fr_2.6rem] items-center gap-2.5">
+                    <span className={"truncate text-xs " + (nm === "Cited (us)" ? "font-semibold" : "text-muted-foreground")}>
+                      {nm}
+                    </span>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                      <div
+                        className={"h-full rounded-full " + ((v as number) > 0 ? "bg-primary" : "bg-white/20")}
+                        style={{ width: `${Math.max(3, ((v as number) / 15) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+                      {v as number}/15
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Zero. That's the honest starting line — watch this chart on re-measure cadence.
+                Full disclosure from run #1: our tool initially credited us 3 mentions, because
+                "cited" is an English word and our matcher was case-insensitive. All three were
+                phrases like "well-cited case studies". We fixed the tool and kept the zero —
+                that choice is the methodology. API-based run; consumer-app protocol runs follow
+                per the{" "}
+                <Link href="/methodology" className="text-primary hover:underline">
+                  measurement caveat
+                </Link>
+                .
               </p>
             </div>
           </CardBody>

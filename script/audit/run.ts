@@ -88,10 +88,19 @@ async function openaiAsk(): Promise<Ask | null> {
   };
 }
 
-/** A firm counts as mentioned when its name appears as a word in the answer. */
+/**
+ * A firm counts as mentioned when its name appears as a word in the answer.
+ * Single-word names match case-SENSITIVELY: brand names that are also
+ * dictionary words ("Cited", "Profound") otherwise false-positive on ordinary
+ * prose ("well-cited case studies") — our own first baseline run caught this
+ * by crediting us 3 phantom mentions. Multi-word names stay case-insensitive.
+ * Residual risk: a dictionary-word brand at sentence start still matches —
+ * eyeball the receipts in last-audit.json before publishing any number.
+ */
 function mentioned(text: string, firm: string): boolean {
   const escaped = firm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b${escaped}\\b`, "i").test(text);
+  const singleWord = !firm.trim().includes(" ");
+  return new RegExp(`\\b${escaped}\\b`, singleWord ? "" : "i").test(text);
 }
 
 interface RunRecord {
