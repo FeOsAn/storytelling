@@ -46,18 +46,58 @@ export function Audit() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 py-10 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-          Audit requested
-        </p>
-        <h1 className="font-serif text-3xl font-bold tracking-tight">
-          We're on it. Scorecard within 3 working days.
-        </h1>
-        <p className="text-muted-foreground">
-          We'll run 15 buyer queries for <strong>{firm}</strong> across ChatGPT, Perplexity,
-          Claude and Google AI Overviews, and send the share-of-voice scorecard to{" "}
-          <strong>{email}</strong> — including what the AI says about you verbatim, and the first
-          three fixes. No pitch attached.
+      <div className="mx-auto max-w-lg space-y-6 py-10">
+        <div className="space-y-3 text-center">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Audit requested ✓
+          </p>
+          <h1 className="font-serif text-3xl font-bold tracking-tight">
+            We're on it. Scorecard within 3 working days.
+          </h1>
+        </div>
+        <Card>
+          <CardBody className="space-y-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              What happens next
+            </p>
+            <ol className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex gap-3">
+                <span className="font-mono text-xs text-primary">1</span>
+                <span>
+                  We run 15 buyer queries for <strong className="text-foreground">{firm}</strong>{" "}
+                  across ChatGPT, Perplexity, Claude and Google AI Overviews — each one multiple
+                  times, per the{" "}
+                  <a href="#/methodology" className="text-primary hover:underline">
+                    public protocol
+                  </a>
+                  .
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-xs text-primary">2</span>
+                <span>
+                  Your scorecard lands at <strong className="text-foreground">{email}</strong>:
+                  share-of-voice vs. your competitors, what the AI says about you verbatim, and
+                  the first three fixes — yours either way, no pitch attached.
+                </span>
+              </li>
+              <li className="flex gap-3">
+                <span className="font-mono text-xs text-primary">3</span>
+                <span>
+                  If the gap makes you want to move, the sprint starts with the
+                  narrative-extraction interview — the story only your firm can tell, turned into
+                  the answers AI engines can lift.
+                </span>
+              </li>
+            </ol>
+          </CardBody>
+        </Card>
+        <p className="text-center text-xs text-muted-foreground">
+          Impatient? You can{" "}
+          <a href="#/intake" className="text-primary hover:underline">
+            start the narrative interview now
+          </a>{" "}
+          — it takes ~15 minutes and saves as you go.
         </p>
       </div>
     );
