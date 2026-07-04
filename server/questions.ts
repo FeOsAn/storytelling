@@ -97,7 +97,9 @@ export function getQuestion(id: string): QuestionNode | undefined {
  * ------------------------------------------------------------------------- */
 
 const GENERIC_MARKERS = [
+  // creator fluff
   "passionate about",
+  "passion for",
   "authentic",
   "my journey",
   "help people",
@@ -106,6 +108,25 @@ const GENERIC_MARKERS = [
   "no excuses",
   "believe in yourself",
   "hard work pays off",
+  // B2B corporate fluff
+  "operational excellence",
+  "commitment to excellence",
+  "best-in-class",
+  "world-class",
+  "synergies",
+  "value creation",
+  "bespoke solutions",
+  "bespoke strategic",
+  "results-driven",
+  "client-centric",
+  "customer-centric",
+  "cutting-edge",
+  "thought leader",
+  "trusted partner",
+  "holistic approach",
+  "proven methodolog",
+  "transformational guidance",
+  "unwavering",
 ];
 
 const DODGE_MARKERS = [

@@ -51,14 +51,20 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ questions: QUESTION_BANK });
   });
 
-  // Adaptive evaluation of a single answer.
+  // Adaptive evaluation of a single answer. Pass `chapterProbed: false` to get
+  // the guaranteed at-least-one-probe-per-chapter behaviour enforced here (not
+  // just in the web client) — polished answers can otherwise dodge every probe.
   app.post("/api/intake/evaluate", (req, res) => {
     const answer = String(req.body?.answer ?? "");
     const evaln = evaluateAnswer(answer);
     const bigClaims = extractBigClaims(answer);
+    const chapterProbed = req.body?.chapterProbed;
+    const forceChapterProbe = chapterProbed === false && !evaln.needsFollowUp;
     res.json({
-      needsFollowUp: evaln.needsFollowUp,
-      reason: evaln.reason,
+      needsFollowUp: evaln.needsFollowUp || forceChapterProbe,
+      reason: forceChapterProbe
+        ? "Guaranteed chapter probe — every chapter earns at least one contradiction hunt."
+        : evaln.reason,
       // Deferred receipts: note big claims gently, never gate the flow.
       bigClaim: bigClaims.length > 0,
       claims: bigClaims,

@@ -24,6 +24,13 @@ export interface BigClaim {
 const NUMBER_RE = /(\d[\d,.]*)\s*(k|m|thousand|million|%|percent)?/gi;
 
 /**
+ * Currency amounts get their own pattern: `\b` never matches next to symbols
+ * like £/$/€ (non-word chars), so "£4.2M" silently escaped the old
+ * word-boundary group. Matched separately and mapped to the revenue category.
+ */
+const CURRENCY_RE = /[$£€]\s?\d|\d[\d,.]*\s?(dollars|pounds|euros|gbp|usd|eur)\b/i;
+
+/**
  * Category signals. `priority` is a specificity tiebreak (lower = wins ties): rarer,
  * more-specific signals (an outcome, a certification) beat broad ones (a "finish"/"race"
  * word) so a revenue/reach number isn't mislabelled a "performance result" (roadmap #3).
@@ -31,23 +38,27 @@ const NUMBER_RE = /(\d[\d,.]*)\s*(k|m|thousand|million|%|percent)?/gi;
 const CATEGORY_RULES: { category: ClaimCategory; re: RegExp; priority: number }[] = [
   { category: "outcome claim", priority: 0, re: /\b(cured|off (?:their |the )?meds|antidepressant|lost .* stone|reversed|healed)\b/i },
   { category: "certification", priority: 1, re: /\b(certified|certification|qualified|registered|licen[cs]ed|accredit)\b/i },
-  { category: "revenue", priority: 2, re: /\b(revenue|\$|£|€|earn|earned|sales|paid|deal worth|contract)\b/i },
-  { category: "audience metric", priority: 3, re: /\b(subscriber|subscribers|followers|list|open rate|email|dm)\b/i },
+  { category: "revenue", priority: 2, re: /\b(revenue|earn|earned|sales|paid|raised?|fees?|deal worth|contract|saved|facilit(y|ies))\b/i },
+  { category: "audience metric", priority: 3, re: /\b(subscriber|subscribers|followers|list|open rate|email|dm|retention|clients?|placements?)\b/i },
   { category: "media reach", priority: 4, re: /\b(views|impressions|reach|streams|downloads)\b/i },
-  { category: "performance result", priority: 5, re: /\b(kg|lbs|pr\b|pb\b|deadlift|squat|marathon|ultra|finish|km|miles|race)\b/i },
+  { category: "performance result", priority: 5, re: /\b(kg|lbs|pr\b|pb\b|deadlift|squat|marathon|ultra|finish|km|miles|race|reduction|margin|growth|churn)\b/i },
 ];
 
 /** True when an answer contains a sizeable, verifiable-sounding claim. */
 export function isBigClaim(text: string): boolean {
   if (!text) return false;
   const lower = text.toLowerCase();
-  // A number paired with any commercial/outcome noun, or an explicit outcome claim.
-  const hasBigNumber = /\b(\d{3,}|\d[\d,.]*\s*(k|m|thousand|million)|\d+\s*(%|percent))\b/i.test(lower);
+  // A number paired with any commercial/outcome noun (or a currency amount),
+  // or an explicit outcome claim. No trailing \b after the % arm — % is a
+  // non-word char, so a boundary there never matches before a space.
+  const hasBigNumber =
+    /\b\d{3,}\b|\b\d[\d,.]*\s*(k|m|thousand|million)\b|\b\d+\s*(%|percent)/i.test(lower);
+  const currency = CURRENCY_RE.test(text);
   const outcome = CATEGORY_RULES.some((r) => r.category === "outcome claim" && r.re.test(lower));
-  const commercialNoun = CATEGORY_RULES.some(
-    (r) => r.category !== "outcome claim" && r.re.test(lower),
-  );
-  return outcome || (hasBigNumber && commercialNoun);
+  const commercialNoun =
+    currency ||
+    CATEGORY_RULES.some((r) => r.category !== "outcome claim" && r.re.test(lower));
+  return outcome || ((hasBigNumber || currency) && commercialNoun);
 }
 
 /**
@@ -57,6 +68,8 @@ export function isBigClaim(text: string): boolean {
  */
 export function categorize(text: string): ClaimCategory {
   const lower = (text || "").toLowerCase();
+  // A currency amount is the strongest possible revenue signal.
+  if (CURRENCY_RE.test(text)) return "revenue";
   let best: (typeof CATEGORY_RULES)[number] | null = null;
   let bestScore = 0;
   for (const rule of CATEGORY_RULES) {

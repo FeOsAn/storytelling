@@ -277,9 +277,11 @@ function postProcess(profile: StoryProfile, input: GenerateInput): StoryProfile 
   ]);
 
   // Mark proof points that are big claims as self-reported unless already set.
+  // Scan claim AND evidence — models often put the number in `claim` and a
+  // paraphrase in `evidence`, which previously dodged the tag.
   const proofPoints = profile.proofPoints.map((p) => ({
     ...p,
-    status: p.status ?? (isBigClaim(p.evidence) ? ("self-reported" as const) : undefined),
+    status: p.status ?? (isBigClaim(`${p.claim} ${p.evidence}`) ? ("self-reported" as const) : undefined),
   }));
 
   const leadWithThis = uniq([
@@ -289,11 +291,21 @@ function postProcess(profile: StoryProfile, input: GenerateInput): StoryProfile 
   ]).filter(Boolean);
 
   // Cap fit score when key numbers are self-reported and/or specificity is low.
+  // Graduated, not flat: scores above the ceiling are scaled into a 55–74 band
+  // so strong profiles still rank above weaker ones instead of everyone
+  // flattening to exactly 74.
   let fitScore = clamp(profile.fitScore || 60);
   const caps: string[] = [];
-  if (bigClaims.length > 0 && fitScore > 74) {
-    fitScore = 74;
-    caps.push(`capped at 74 until self-reported numbers are verified (${bigClaims.length} claim(s))`);
+  if (bigClaims.length > 0) {
+    // min(x, 55 + 0.19x) is monotonic: low scores pass through untouched,
+    // high scores compress into the unverified band topping out at 74.
+    const banded = clamp(Math.min(fitScore, 55 + (fitScore / 100) * 19));
+    if (banded < fitScore) {
+      caps.push(
+        `scaled into the unverified band (max 74) until self-reported numbers are verified (${bigClaims.length} claim(s))`,
+      );
+      fitScore = banded;
+    }
   }
   if (spec.lowSpecificity && fitScore > 55) {
     fitScore = 55;

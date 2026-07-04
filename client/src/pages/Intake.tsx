@@ -71,14 +71,14 @@ export function Intake() {
         setToast("Nice — noted a big claim. We'll ask for a light receipt after, never mid-flow.");
       }
 
+      // The at-least-one-probe-per-chapter guarantee is enforced server-side;
+      // we just report whether this chapter has been probed yet.
       const evaln = await apiRequest<{ needsFollowUp: boolean; reason: string }>(
         "/api/intake/evaluate",
-        { body: { answer: answer.trim() } },
+        { body: { answer: answer.trim(), chapterProbed: probedChapters.has(current.chapter) } },
       );
 
-      // Guarantee at least one contradiction probe per chapter.
-      const chapterUnprobed = !probedChapters.has(current.chapter);
-      if (evaln.needsFollowUp || chapterUnprobed) {
+      if (evaln.needsFollowUp) {
         const fu = await apiRequest<{ followUp: string; reason: string }>("/api/intake/followup", {
           body: { questionId: current.id, answer: answer.trim(), name, niche },
         });
