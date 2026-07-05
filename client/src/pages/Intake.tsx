@@ -79,6 +79,136 @@ function GenerationProgress() {
   );
 }
 
+/** Left rail (desktop): the three chapters with live state. */
+function ChapterRail({
+  script,
+  qIndex,
+  answers,
+  probes,
+}: {
+  script: QuestionNode[];
+  qIndex: number;
+  answers: number;
+  probes: number;
+}) {
+  const chapters: { name: string; start: number; count: number }[] = [];
+  for (let i = 0; i < script.length; i++) {
+    const c = script[i].chapter;
+    const last = chapters[chapters.length - 1];
+    if (!last || last.name !== c) chapters.push({ name: c, start: i, count: 1 });
+    else last.count++;
+  }
+  return (
+    <aside className="hidden flex-col justify-between rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)] lg:flex">
+      <div className="space-y-5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          The three chapters
+        </p>
+        <ol className="space-y-4">
+          {chapters.map((c, ci) => {
+            const done = qIndex >= c.start + c.count;
+            const active = !done && qIndex >= c.start;
+            return (
+              <li key={c.name} className="flex items-start gap-3">
+                <span
+                  className={
+                    "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] " +
+                    (done
+                      ? "bg-primary/20 text-primary"
+                      : active
+                        ? "bg-primary text-primary-foreground shadow-[0_0_10px_rgba(63,214,143,0.4)]"
+                        : "bg-white/[0.05] text-muted-foreground/60")
+                  }
+                >
+                  {done ? "✓" : ci + 1}
+                </span>
+                <div>
+                  <p
+                    className={
+                      "text-sm " +
+                      (active
+                        ? "font-medium text-foreground"
+                        : done
+                          ? "text-muted-foreground"
+                          : "text-muted-foreground/60")
+                    }
+                  >
+                    {c.name}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/60">
+                    {c.count} question{c.count > 1 ? "s" : ""}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+      <div className="space-y-1.5 border-t border-white/[0.06] pt-4 font-mono text-[11px] text-muted-foreground">
+        <p>
+          answers on record <span className="text-foreground">{answers}</span>
+        </p>
+        <p>
+          probes faced <span className="text-foreground">{probes}</span>
+        </p>
+        <p className="text-muted-foreground/60">autosaves after every answer</p>
+      </div>
+    </aside>
+  );
+}
+
+const LISTENING_FOR: Record<string, string> = {
+  Foundation:
+    "The founding wound, the turn, and the client who calls at 9pm — the parts the About page skips.",
+  Edge: "The hill you die on, and where you contradict yourself. The messy true part is the value.",
+  "Proof & Fit":
+    "Receipts — numbers, names, refusals. Everything unverified gets fenced, never asserted.",
+};
+
+/** Right rail (desktop): live interviewer's notes. */
+function NotesRail({
+  chapter,
+  lastTurn,
+  probing,
+}: {
+  chapter: string;
+  lastTurn?: IntakeTurnClient;
+  probing: boolean;
+}) {
+  return (
+    <aside className="hidden flex-col gap-4 lg:flex">
+      <div className="rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          What we&apos;re listening for
+        </p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+          {LISTENING_FOR[chapter] ?? LISTENING_FOR.Foundation}
+        </p>
+      </div>
+      <div className="rounded-2xl bg-primary/[0.05] p-5 shadow-[inset_0_0_0_1px_rgba(63,214,143,0.15)]">
+        <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+          {probing ? "Why the pushback" : "Specifics get cited"}
+        </p>
+        <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+          {probing
+            ? "Every chapter gets one deeper pass. The private version — the doubt, the cost, the contradiction — is the part no competitor can copy."
+            : "AI engines can only recommend what they can quote. Name the year, the client, the number, the moment — polish is invisible, detail is ammunition."}
+        </p>
+      </div>
+      {lastTurn && (
+        <div className="rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)]">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            On the record
+          </p>
+          <p className="mt-2 line-clamp-4 text-[13px] italic leading-relaxed text-muted-foreground/80">
+            &ldquo;{lastTurn.answer}&rdquo;
+          </p>
+        </div>
+      )}
+    </aside>
+  );
+}
+
 export function Intake() {
   const params = useParams<{ id?: string }>();
   const [, navigate] = useLocation();
@@ -284,41 +414,81 @@ export function Intake() {
 
   if (phase === "apply") {
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-lg flex-col justify-center space-y-6">
+      <div className="flex min-h-[70vh] flex-col justify-center space-y-8">
         <Stepper phase={phase} />
-        <div className="space-y-3 text-center">
-          <h1 className="font-serif text-3xl tracking-tight text-foreground">
-            The narrative-extraction interview
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Six questions, adaptive, with pushback — about 15 minutes. We hunt for the edge only
-            your firm can claim, you approve it, and you get the narrative profile that tells your
-            whole team what the marketing is aimed at. Progress saves as you go.
-          </p>
+        <div className="mx-auto grid w-full max-w-4xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h1 className="font-serif text-3xl tracking-tight text-foreground md:text-4xl">
+                The narrative-extraction interview
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Six questions, adaptive, with pushback — about 15 minutes. We hunt for the edge
+                only your firm can claim, you approve it, and you get the narrative profile that
+                tells your whole team what the marketing is aimed at.
+              </p>
+            </div>
+            <Card>
+              <CardBody className="space-y-3">
+                <Input
+                  placeholder="Your name (the founder / partner talking)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <Input
+                  placeholder="Firm or website"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                />
+                <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input
+                  placeholder="What you sell, to whom — e.g. GTM consulting for fintechs"
+                  value={niche}
+                  onChange={(e) => setNiche(e.target.value)}
+                />
+                <Button onClick={startApplication} disabled={busy || !name.trim()} className="w-full">
+                  {busy ? "Starting…" : "Begin the interview"}
+                </Button>
+              </CardBody>
+            </Card>
+          </div>
+          <aside className="hidden space-y-4 lg:block">
+            <div className="rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                What to expect
+              </p>
+              <ul className="mt-3 space-y-2.5 text-[13px] leading-relaxed text-muted-foreground">
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-primary">1</span>
+                  <span>Three chapters: Foundation, Edge, Proof &amp; Fit.</span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-primary">2</span>
+                  <span>
+                    We push back — at least once per chapter. That&apos;s where the good material
+                    lives.
+                  </span>
+                </li>
+                <li className="flex gap-2.5">
+                  <span className="font-mono text-primary">3</span>
+                  <span>
+                    You confirm, sharpen or reject the edge we reflect back. Nothing ships without
+                    your sign-off.
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-2xl bg-primary/[0.05] p-5 shadow-[inset_0_0_0_1px_rgba(63,214,143,0.15)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                Safe to wander off
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Progress saves after every answer. Close the tab, come back, carry on — your link
+                remembers.
+              </p>
+            </div>
+          </aside>
         </div>
-        <Card>
-          <CardBody className="space-y-3">
-            <Input
-              placeholder="Your name (the founder / partner talking)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Input
-              placeholder="Firm or website"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-            />
-            <Input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input
-              placeholder="What you sell, to whom — e.g. GTM consulting for fintechs"
-              value={niche}
-              onChange={(e) => setNiche(e.target.value)}
-            />
-            <Button onClick={startApplication} disabled={busy || !name.trim()} className="w-full">
-              {busy ? "Starting…" : "Begin the interview"}
-            </Button>
-          </CardBody>
-        </Card>
       </div>
     );
   }
@@ -333,116 +503,163 @@ export function Intake() {
   }
 
   if (phase === "edge") {
+    const probesFaced = turns.filter((t) => t.kind === "followup").length;
     return (
-      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col justify-center space-y-6">
+      <div className="flex min-h-[70vh] flex-col justify-center space-y-8">
         <Stepper phase={phase} />
-        <div className="space-y-4">
-          <Badge tone="primary">Own your edge</Badge>
-          <h1 className="font-serif text-3xl tracking-tight text-foreground">
-            Here&apos;s the edge we heard
-          </h1>
-          {busy && !edge ? (
-            <p className="text-muted-foreground">Listening back to your answers…</p>
-          ) : pendingRefine ? (
-            <>
-              <p className="text-sm text-muted-foreground">So the edge is —</p>
-              <Card>
-                <CardBody>
-                  <p className="font-serif text-xl">{edgeNote.trim()}</p>
-                </CardBody>
-              </Card>
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => confirmEdge("refine")}>Yes — lock it in</Button>
-                <Button variant="ghost" onClick={() => setPendingRefine(false)}>
-                  Let me tweak it
-                </Button>
+        <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
+          <div className="space-y-4">
+            <Badge tone="primary">Own your edge</Badge>
+            <h1 className="font-serif text-3xl tracking-tight text-foreground">
+              Here&apos;s the edge we heard
+            </h1>
+            {busy && !edge ? (
+              <p className="text-muted-foreground">Listening back to your answers…</p>
+            ) : pendingRefine ? (
+              <>
+                <p className="text-sm text-muted-foreground">So the edge is —</p>
+                <Card>
+                  <CardBody className="md:p-8">
+                    <p className="font-serif text-xl md:text-2xl">{edgeNote.trim()}</p>
+                  </CardBody>
+                </Card>
+                <div className="flex flex-wrap gap-3">
+                  <Button onClick={() => confirmEdge("refine")}>Yes — lock it in</Button>
+                  <Button variant="ghost" onClick={() => setPendingRefine(false)}>
+                    Let me tweak it
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Card>
+                  <CardBody className="md:p-8">
+                    <p className="font-serif text-xl md:text-2xl">{edge}</p>
+                  </CardBody>
+                </Card>
+                <Textarea
+                  rows={3}
+                  placeholder="Refine it in your own words (optional) — this becomes the sharper version."
+                  value={edgeNote}
+                  onChange={(e) => setEdgeNote(e.target.value)}
+                />
+                <div className="flex flex-wrap gap-3">
+                  <Button onClick={() => confirmEdge("confirm")}>That&apos;s it — confirm</Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPendingRefine(true)}
+                    disabled={!edgeNote.trim()}
+                  >
+                    Use my refined version
+                  </Button>
+                  <Button variant="ghost" onClick={() => confirmEdge("reject")}>
+                    That&apos;s not me — reject
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+          <aside className="hidden space-y-4 lg:block">
+            <div className="rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                What happens with this
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                This sentence becomes the spine of everything: your positioning line, the entity
+                line your team repeats verbatim, and the reason an AI gives when it recommends
+                you.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-primary/[0.05] p-5 shadow-[inset_0_0_0_1px_rgba(63,214,143,0.15)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                Refining beats confirming
+              </p>
+              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+                Founders who sharpen the hypothesis in their own words end up with materially
+                stronger profiles. If it&apos;s 90% right, fix the 10%.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white/[0.015] p-5 shadow-[inset_0_0_0_1px_rgba(190,235,210,0.06)]">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                This session
+              </p>
+              <div className="mt-2 space-y-1.5 font-mono text-[11px] text-muted-foreground">
+                <p>
+                  answers on record <span className="text-foreground">{turns.length}</span>
+                </p>
+                <p>
+                  probes faced <span className="text-foreground">{probesFaced}</span>
+                </p>
               </div>
-            </>
-          ) : (
-            <>
-              <Card>
-                <CardBody>
-                  <p className="font-serif text-xl">{edge}</p>
-                </CardBody>
-              </Card>
-              <Textarea
-                rows={3}
-                placeholder="Refine it in your own words (optional) — this becomes the sharper version."
-                value={edgeNote}
-                onChange={(e) => setEdgeNote(e.target.value)}
-              />
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={() => confirmEdge("confirm")}>That&apos;s it — confirm</Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPendingRefine(true)}
-                  disabled={!edgeNote.trim()}
-                >
-                  Use my refined version
-                </Button>
-                <Button variant="ghost" onClick={() => confirmEdge("reject")}>
-                  That&apos;s not me — reject
-                </Button>
-              </div>
-            </>
-          )}
+            </div>
+          </aside>
         </div>
       </div>
     );
   }
 
-  // interview
+  // interview — three-zone desktop workspace, single column on mobile.
   const progress = script.length
     ? ((qIndex + (followUp ? 0.5 : 0)) / script.length) * 100
     : 0;
+  const probesFaced = turns.filter((t) => t.kind === "followup").length;
+  const lastTurn = turns.length > 0 ? turns[turns.length - 1] : undefined;
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col justify-center space-y-6">
+    <div className="flex min-h-[70vh] flex-col justify-center space-y-8">
       <Stepper phase={phase} />
       {resumed && (
-        <p className="rounded-md bg-primary/10 p-2.5 text-center text-xs text-primary">
+        <p className="mx-auto w-full max-w-3xl rounded-md bg-primary/10 p-2.5 text-center text-xs text-primary">
           Welcome back — your earlier answers are saved. Picking up at question {qIndex + 1}.
         </p>
       )}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between">
-          <Badge tone="accent">{current?.chapter}</Badge>
-          <span className="font-mono text-xs text-muted-foreground">
-            Question {qIndex + 1} of {script.length}
-          </span>
-        </div>
-        <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
-          <div
-            className="h-full rounded-full bg-primary/70 shadow-[0_0_6px_rgba(63,214,143,0.4)] transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+      <div className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[240px_minmax(0,1fr)_280px] lg:items-stretch">
+        <ChapterRail script={script} qIndex={qIndex} answers={turns.length} probes={probesFaced} />
 
-      <Card>
-        <CardBody className="space-y-4 md:p-8">
-          <p className="font-serif text-xl leading-snug md:text-[1.65rem]">
-            {followUp ? followUp.text : current?.prompt}
-          </p>
-          {followUp && (
-            <p className="text-xs italic text-muted-foreground">
-              Why we&apos;re asking: {followUp.reason}
-            </p>
-          )}
-          <VoiceTextarea value={answer} onChange={setAnswer} placeholder="Speak or type your answer…" />
-          {toast && <p className="rounded-md bg-accent/10 p-2 text-xs text-accent">{toast}</p>}
-          <div className="flex justify-end">
-            {followUp ? (
-              <Button onClick={submitFollowUp} disabled={busy || !answer.trim()}>
-                Continue
-              </Button>
-            ) : (
-              <Button onClick={() => submitAnswer("text")} disabled={busy || !answer.trim()}>
-                {busy ? "…" : "Submit answer"}
-              </Button>
-            )}
+        <div className="flex flex-col justify-center space-y-4">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Badge tone="accent">{current?.chapter}</Badge>
+              <span className="font-mono text-xs text-muted-foreground">
+                Question {qIndex + 1} of {script.length}
+              </span>
+            </div>
+            <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className="h-full rounded-full bg-primary/70 shadow-[0_0_6px_rgba(63,214,143,0.4)] transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </CardBody>
-      </Card>
+
+          <Card>
+            <CardBody className="space-y-4 md:p-8">
+              <p className="font-serif text-xl leading-snug md:text-[1.65rem]">
+                {followUp ? followUp.text : current?.prompt}
+              </p>
+              {followUp && (
+                <p className="text-xs italic text-muted-foreground">
+                  Why we&apos;re asking: {followUp.reason}
+                </p>
+              )}
+              <VoiceTextarea value={answer} onChange={setAnswer} placeholder="Speak or type your answer…" />
+              {toast && <p className="rounded-md bg-accent/10 p-2 text-xs text-accent">{toast}</p>}
+              <div className="flex justify-end">
+                {followUp ? (
+                  <Button onClick={submitFollowUp} disabled={busy || !answer.trim()}>
+                    Continue
+                  </Button>
+                ) : (
+                  <Button onClick={() => submitAnswer("text")} disabled={busy || !answer.trim()}>
+                    {busy ? "…" : "Submit answer"}
+                  </Button>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+
+        <NotesRail chapter={current?.chapter ?? ""} lastTurn={lastTurn} probing={!!followUp} />
+      </div>
     </div>
   );
 }
