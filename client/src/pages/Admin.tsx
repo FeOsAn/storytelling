@@ -104,11 +104,18 @@ export function Admin() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-serif text-2xl font-bold tracking-tight">Client pipeline</h1>
-        {auth.configured && (
-          <Button variant="ghost" className="text-xs" onClick={logout}>
-            Log out
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          <a href="/api/admin/export" download>
+            <Button variant="secondary" className="text-xs">
+              ↓ Download backup
+            </Button>
+          </a>
+          {auth.configured && (
+            <Button variant="ghost" className="text-xs" onClick={logout}>
+              Log out
+            </Button>
+          )}
+        </div>
       </div>
       {creators.length === 0 && (
         <p className="text-sm text-muted-foreground">

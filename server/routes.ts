@@ -288,6 +288,34 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ creators: rows });
   });
 
+  // Full data export — the operator's backup. Everything: applications,
+  // transcripts, edges, profiles, proofs. Download it on a schedule; the
+  // SQLite volume must never be the only copy of a client's interview.
+  app.get("/api/admin/export", requireOperator, (_req, res) => {
+    const rows = storage.listCreators().map((c) => ({
+      id: c.id,
+      name: c.name,
+      handle: c.handle,
+      email: c.email,
+      niche: c.niche,
+      platforms: toArray(c.platforms),
+      audienceSize: c.audienceSize,
+      status: c.status,
+      approved: c.approved,
+      shortlisted: c.shortlisted,
+      createdAt: c.createdAt,
+      consent: parseJson<unknown>(c.consentJson, null),
+      turns: parseJson<any[]>(c.intakeJson, []),
+      edge: parseJson<unknown>(c.edgeJson, null),
+      profile: parseJson<StoryProfile | null>(c.profileJson, null),
+      proofs: parseJson<any[]>(c.proofsJson, []),
+    }));
+    const stamp = new Date().toISOString().slice(0, 10);
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", `attachment; filename="cited-backup-${stamp}.json"`);
+    res.json({ exportedAt: new Date().toISOString(), creators: rows });
+  });
+
   app.post("/api/admin/shortlist", requireOperator, (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
     const creator = storage.getCreator(creatorId);
