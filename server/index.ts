@@ -7,13 +7,23 @@ import express from "express";
 import { createServer } from "node:http";
 import path from "node:path";
 import { registerRoutes } from "./routes";
+import { securityHeaders } from "./security";
 
 const PORT = Number(process.env.PORT || 5000);
 const isProd = process.env.NODE_ENV === "production";
 
 async function main() {
   const app = express();
+  // Behind Railway's proxy: real client IPs for rate limiting, Secure cookies.
+  app.set("trust proxy", 1);
+  app.use(securityHeaders);
   app.use(express.json({ limit: "1mb" }));
+
+  if (isProd && !process.env.CITED_ADMIN_PASSWORD) {
+    console.warn(
+      "[security] CITED_ADMIN_PASSWORD is not set — operator routes are LOCKED until it is.",
+    );
+  }
 
   const server = createServer(app);
   await registerRoutes(server, app);

@@ -27,7 +27,7 @@ firms.
 - **Adaptive 3-interview intake** — chapters Foundation → Edge → Proof & Fit (6 primary
   questions), voice (Web Speech API) with a typed fallback.
 - **Contradiction hunting** — thin/generic/polished/dodging answers draw a sharper probe; at
-  least one probe per chapter is guaranteed client-side.
+  least one probe per chapter is guaranteed server-side.
 - **Live edge confirmation** — after the last answer the engine reflects a one-sentence edge
   hypothesis; the creator can **confirm / refine / reject** it (`POST /api/intake/edge`).
 - **Deferred "Receipts"** — big/sensitive claims (`shared/claims.ts`) are noted gently and
@@ -50,7 +50,8 @@ firms.
   `server/llm.ts` (engine selection).
 - **Persistence:** SQLite via `better-sqlite3` + Drizzle (`server/storage.ts`). DB file `data.db`
   (override with `STORYFIT_DB`); `proofs_json` / `edge_json` added idempotently on boot.
-  **No localStorage / sessionStorage / cookies anywhere** — persistence is server-side by design.
+  Client state is server-side (resumable interviews); the only cookie is the operator's
+  HttpOnly session (see Security model).
 - **Shared:** `shared/schema.ts` (zod + drizzle), `shared/claims.ts` (dependency-free big-claim
   heuristics used by both server and client).
 
@@ -86,7 +87,8 @@ The repo ships a multi-stage `Dockerfile` and `railway.json` (health check on
 1. [railway.app](https://railway.app) → New Project → **Deploy from GitHub repo** →
    pick this repo (`main`). The Dockerfile is detected automatically.
 2. Service → **Variables**: set `STORYFIT_DB=/data/data.db`, `ANTHROPIC_API_KEY=<key>`
-   (optional — deterministic engine without it).
+   (optional — deterministic engine without it), and **`CITED_ADMIN_PASSWORD=<strong password>`**
+   (required: operator routes are locked without it).
 3. Service → **Volumes**: add a volume mounted at `/data` (this is the database;
    without it, data is wiped on every deploy).
 4. Service → **Settings → Networking**: Generate Domain (instant `*.up.railway.app`
@@ -123,6 +125,24 @@ Locally it stays `__PORT_5001__` (starts with `__`), so `API_BASE` falls back to
 | `SIM_BASE` | Base URL for QA/sim scripts, e.g. `http://127.0.0.1:5001` |
 
 `/api/health` reports the live engine: `llm:claude`, `llm:openai`, or `deterministic`.
+
+## Security model
+
+- **Operator auth:** single-operator login (`CITED_ADMIN_PASSWORD`) with HMAC-signed
+  HttpOnly `SameSite=Lax` session cookies (7-day TTL, `Secure` in production; changing
+  the password revokes all sessions). Login is rate-limited (5 tries / 15 min / IP).
+  In production with no password set, operator routes are **locked**, never open.
+- **Protected routes:** `/api/admin/*`, `/api/approve`, `/api/consent`, and profile
+  *regeneration*. Public callers get exactly one `/api/generate` per creator — the end
+  of their own interview.
+- **Abuse guards:** LLM-backed endpoints 60 req / 10 min / IP; applications & proofs
+  20 / hour / IP (loopback exempt so local QA never trips). `trust proxy` is on for
+  Railway so limits see real client IPs.
+- **Headers:** nosniff, frame-deny, referrer-policy, HSTS + CSP in production.
+- **Profile links** (`/profile/:id`) are unguessable capability URLs (nanoid) meant for
+  sharing with the client; the cohort listing that could enumerate them is operator-only.
+- **Note:** the legacy "no cookies" rule was a Perplexity-sandbox constraint, retired at
+  deployment — HttpOnly cookies are the secure session mechanism here.
 
 ## Deliberate deviations from the original
 

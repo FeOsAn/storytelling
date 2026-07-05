@@ -25,6 +25,16 @@ import {
 } from "./questions";
 import { generateProfile } from "./storyEngine";
 import { isBigClaim, extractBigClaims } from "@shared/claims";
+import {
+  authConfigured,
+  checkPassword,
+  clearSession,
+  isOperator,
+  issueSession,
+  loginLimiter,
+  requireOperator,
+} from "./auth";
+import { rateLimit } from "./security";
 
 function parseJson<T>(raw: string | null | undefined, fallback: T): T {
   if (!raw) return fallback;
@@ -42,8 +52,35 @@ function toArray(platforms: unknown): string[] {
 }
 
 export async function registerRoutes(_server: Server, app: Express): Promise<void> {
+  // Abuse guards: LLM-backed endpoints cost real money; applications can be
+  // spammed. Loopback is exempt (local QA/sims), production sees real IPs.
+  const llmLimit = rateLimit({ name: "llm", max: 60, windowMs: 10 * 60 * 1000 });
+  const formLimit = rateLimit({ name: "form", max: 20, windowMs: 60 * 60 * 1000 });
+
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, engine: getEngine() });
+  });
+
+  /* ---- Operator auth ---- */
+
+  app.post("/api/auth/login", loginLimiter, (req, res) => {
+    if (!authConfigured()) {
+      return res.status(503).json({ error: "auth not configured — set CITED_ADMIN_PASSWORD" });
+    }
+    if (!checkPassword(String(req.body?.password ?? ""))) {
+      return res.status(401).json({ error: "wrong password" });
+    }
+    issueSession(res);
+    res.json({ ok: true, operator: true });
+  });
+
+  app.post("/api/auth/logout", (_req, res) => {
+    clearSession(res);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/auth/me", (req, res) => {
+    res.json({ operator: isOperator(req), configured: authConfigured() });
   });
 
   // The interview script (question bank).
@@ -72,7 +109,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
   });
 
   // Contradiction-hunting follow-up.
-  app.post("/api/intake/followup", async (req, res) => {
+  app.post("/api/intake/followup", llmLimit, async (req, res) => {
     const questionId = String(req.body?.questionId ?? "");
     const answer = String(req.body?.answer ?? "");
     const { followUp, reason } = await generateFollowUpSmart({
@@ -85,7 +122,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
   });
 
   // Live edge confirmation — reflect a one-sentence hypothesis.
-  app.post("/api/intake/edge", async (req, res) => {
+  app.post("/api/intake/edge", llmLimit, async (req, res) => {
     let turns = z.array(intakeTurnSchema).safeParse(req.body?.turns).data;
     if (!turns && req.body?.creatorId) {
       const creator = storage.getCreator(String(req.body.creatorId));
@@ -100,7 +137,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
 
   // Create the creator (consent-gated). NOTE: this is the creator-creation route,
   // NOT POST /api/creators.
-  app.post("/api/applications", (req, res) => {
+  app.post("/api/applications", formLimit, (req, res) => {
     const parsed = applicationSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: "invalid application", details: parsed.error.flatten() });
@@ -131,7 +168,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
   });
 
   // Deferred receipts: creators can add proofs, but never self-assign `verified`.
-  app.post("/api/proofs", (req, res) => {
+  app.post("/api/proofs", formLimit, (req, res) => {
     const schema = z.object({ creatorId: z.string(), proofs: z.array(proofSchema) });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: "invalid proofs" });
@@ -147,7 +184,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
   });
 
   // Operator-only verification.
-  app.post("/api/admin/verify", (req, res) => {
+  app.post("/api/admin/verify", requireOperator, (req, res) => {
     const schema = z.object({
       creatorId: z.string(),
       index: z.number(),
@@ -165,11 +202,16 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ ok: true, proofs });
   });
 
-  // Generate the story profile.
-  app.post("/api/generate", async (req, res) => {
+  // Generate the story profile. Public callers get exactly one generation per
+  // creator (the end of their own interview); regeneration costs money and is
+  // operator-only.
+  app.post("/api/generate", llmLimit, async (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
     const creator = storage.getCreator(creatorId);
     if (!creator) return res.status(404).json({ error: "creator not found" });
+    if (creator.profileJson && !isOperator(req)) {
+      return res.status(403).json({ error: "profile already generated — regeneration is operator-only" });
+    }
 
     const turns = parseJson<any[]>(creator.intakeJson, []);
     const edgeTurn = parseJson<any>(creator.edgeJson, null);
@@ -190,7 +232,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
   });
 
   // Approval + consent gates.
-  app.post("/api/approve", (req, res) => {
+  app.post("/api/approve", requireOperator, (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
     const creator = storage.getCreator(creatorId);
     if (!creator) return res.status(404).json({ error: "creator not found" });
@@ -198,7 +240,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ ok: true });
   });
 
-  app.post("/api/consent", (req, res) => {
+  app.post("/api/consent", requireOperator, (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
     const creator = storage.getCreator(creatorId);
     if (!creator) return res.status(404).json({ error: "creator not found" });
@@ -231,7 +273,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
 
   // Brand/admin cohort directory. turnsCount lets the pipeline distinguish
   // audit leads (no interview yet) from interviewed/generated clients.
-  app.get("/api/admin/cohort", (_req, res) => {
+  app.get("/api/admin/cohort", requireOperator, (_req, res) => {
     const rows = storage.listCreators().map((c) => ({
       id: c.id,
       name: c.name,
@@ -246,7 +288,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ creators: rows });
   });
 
-  app.post("/api/admin/shortlist", (req, res) => {
+  app.post("/api/admin/shortlist", requireOperator, (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
     const creator = storage.getCreator(creatorId);
     if (!creator) return res.status(404).json({ error: "creator not found" });

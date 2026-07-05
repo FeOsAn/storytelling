@@ -10,6 +10,7 @@ import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
 export function Profile() {
   const { id } = useParams<{ id: string }>();
   const { data, isLoading } = useQuery<CreatorView>({ queryKey: [`/api/creators/${id}`] });
+  const { data: auth } = useQuery<{ operator: boolean }>({ queryKey: ["/api/auth/me"] });
   const [receipt, setReceipt] = useState("");
   const [brandFacing, setBrandFacing] = useState(false);
 
@@ -53,7 +54,11 @@ export function Profile() {
           <Button variant="ghost" onClick={() => setBrandFacing((b) => !b)}>
             {brandFacing ? "Internal view" : "Client-facing view"}
           </Button>
-          {data.approved ? <Badge tone="accent">approved</Badge> : <Button onClick={approve}>Approve</Button>}
+          {data.approved ? (
+            <Badge tone="accent">approved</Badge>
+          ) : auth?.operator ? (
+            <Button onClick={approve}>Approve</Button>
+          ) : null}
         </div>
       </div>
 
