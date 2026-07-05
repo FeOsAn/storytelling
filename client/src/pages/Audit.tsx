@@ -46,7 +46,7 @@ export function Audit() {
 
   if (done) {
     return (
-      <div className="mx-auto max-w-lg space-y-6 py-10">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-lg flex-col justify-center space-y-6 py-10">
         <div className="space-y-3 text-center">
           <p className="text-xs font-semibold uppercase tracking-widest text-primary">
             Audit requested ✓
@@ -104,7 +104,7 @@ export function Audit() {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 py-4">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col justify-center space-y-6 py-4">
       <Reveal>
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-primary">

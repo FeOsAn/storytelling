@@ -100,7 +100,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({
       needsFollowUp: evaln.needsFollowUp || forceChapterProbe,
       reason: forceChapterProbe
-        ? "Guaranteed chapter probe — every chapter earns at least one contradiction hunt."
+        ? "Even a good answer has a layer underneath — every chapter gets one deeper pass."
         : evaln.reason,
       // Deferred receipts: note big claims gently, never gate the flow.
       bigClaim: bigClaims.length > 0,

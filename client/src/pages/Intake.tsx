@@ -207,7 +207,9 @@ export function Intake() {
         const fu = await apiRequest<{ followUp: string; reason: string }>("/api/intake/followup", {
           body: { questionId: current.id, answer: answer.trim(), name, niche },
         });
-        setFollowUp({ text: fu.followUp, reason: fu.reason });
+        // Show the evaluate verdict (why THIS answer earned a probe), not the
+        // followup generator's internal re-evaluation.
+        setFollowUp({ text: fu.followUp, reason: evaln.reason });
         setProbedChapters((s) => new Set(s).add(current.chapter));
         setAnswer("");
       } else {
@@ -273,12 +275,16 @@ export function Intake() {
   }
 
   if (phase === "loading") {
-    return <p className="py-16 text-center text-muted-foreground">Picking up where you left off…</p>;
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <p className="text-muted-foreground">Picking up where you left off…</p>
+      </div>
+    );
   }
 
   if (phase === "apply") {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-lg flex-col justify-center space-y-6">
         <Stepper phase={phase} />
         <div className="space-y-3 text-center">
           <h1 className="font-serif text-3xl tracking-tight text-foreground">
@@ -319,7 +325,7 @@ export function Intake() {
 
   if (phase === "generating") {
     return (
-      <div className="space-y-6">
+      <div className="flex min-h-[70vh] flex-col justify-center space-y-6">
         <Stepper phase={phase} />
         <GenerationProgress />
       </div>
@@ -328,7 +334,7 @@ export function Intake() {
 
   if (phase === "edge") {
     return (
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col justify-center space-y-6">
         <Stepper phase={phase} />
         <div className="space-y-4">
           <Badge tone="primary">Own your edge</Badge>
@@ -386,24 +392,37 @@ export function Intake() {
   }
 
   // interview
+  const progress = script.length
+    ? ((qIndex + (followUp ? 0.5 : 0)) / script.length) * 100
+    : 0;
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl flex-col justify-center space-y-6">
       <Stepper phase={phase} />
       {resumed && (
         <p className="rounded-md bg-primary/10 p-2.5 text-center text-xs text-primary">
           Welcome back — your earlier answers are saved. Picking up at question {qIndex + 1}.
         </p>
       )}
-      <div className="flex items-center justify-between">
-        <Badge tone="accent">{current?.chapter}</Badge>
-        <span className="font-mono text-xs text-muted-foreground">
-          Question {qIndex + 1} of {script.length}
-        </span>
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <Badge tone="accent">{current?.chapter}</Badge>
+          <span className="font-mono text-xs text-muted-foreground">
+            Question {qIndex + 1} of {script.length}
+          </span>
+        </div>
+        <div className="h-1 overflow-hidden rounded-full bg-white/[0.06]">
+          <div
+            className="h-full rounded-full bg-primary/70 shadow-[0_0_6px_rgba(63,214,143,0.4)] transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
 
       <Card>
-        <CardBody className="space-y-3">
-          <p className="font-serif text-xl leading-snug">{followUp ? followUp.text : current?.prompt}</p>
+        <CardBody className="space-y-4 md:p-8">
+          <p className="font-serif text-xl leading-snug md:text-[1.65rem]">
+            {followUp ? followUp.text : current?.prompt}
+          </p>
           {followUp && (
             <p className="text-xs italic text-muted-foreground">
               Why we&apos;re asking: {followUp.reason}
@@ -484,7 +503,7 @@ function VoiceTextarea({
 
   return (
     <div className="space-y-2">
-      <Textarea rows={5} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <Textarea rows={6} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
       {supported && (
         <Button variant={listening ? "destructive" : "secondary"} onClick={toggle} type="button">
           {listening ? "◼ Stop dictation" : "🎤 Dictate"}
