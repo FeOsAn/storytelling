@@ -11,8 +11,10 @@ import path from "node:path";
 export async function setupVite(app: Express, server: Server): Promise<void> {
   const { createServer } = await import("vite");
   const vite = await createServer({
-    // `npm run dev` runs from the repo root, so the client lives at <cwd>/client.
-    root: path.resolve(process.cwd(), "client"),
+    // Vite only auto-discovers a config inside `root` (client/), but ours —
+    // with the @ / @shared aliases — lives at the repo root. Point at it
+    // explicitly or dev serving breaks on every aliased import.
+    configFile: path.resolve(process.cwd(), "vite.config.ts"),
     appType: "spa",
     server: { middlewareMode: true, hmr: { server } },
   });
