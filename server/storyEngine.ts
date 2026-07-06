@@ -38,7 +38,7 @@ async function tryLlmProfile(input: GenerateInput): Promise<StoryProfile | null>
   const text = await complete({
     // A full profile with rich prose needs headroom — too small a budget truncates
     // the JSON and the whole response is silently discarded.
-    maxTokens: 8000,
+    maxTokens: 10000,
     system: `You are Cited, a strategic-narrative engine for founders and expert B2B firms.
 Turn the interview into a UNIQUE, client-ready narrative profile — the story an AI assistant would need in order to recommend this firm by name. The differentiator is the firm's EDGE — a lived contradiction, not polished positioning. Quote the founder's own words in "verbatim". Treat brandFitMap as the map of client/partner categories this firm fits. Never invent numbers; only use claims present in the transcript.
 The marketing-playbook fields direct the client's whole marketing team:

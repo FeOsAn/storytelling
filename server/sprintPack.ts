@@ -30,19 +30,18 @@ export async function generateSprintPack(input: SprintPackInput): Promise<Sprint
     landscape?.targets.slice(0, 8).map((t) => `${t.url} (cited ${t.citations}x)`) ?? [];
 
   // 2. Comparison page + FAQ.
-  const aText = await complete({
-    maxTokens: 6000,
+  const a = await completeJson("comparison+faq", {
+    maxTokens: 8000,
     system: `You draft answer-shaped web content for expert B2B firms — content AI engines can lift and quote (statistics, quotable claims, honest comparisons). Never invent facts or numbers: only use what the brief states. Where the client lacks data, write [VERIFY: …] placeholders. British English. Reply ONLY with JSON:
 {"comparisonPage":{"title":string,"markdown":string},"faq":[{"q":string,"a":string}]}
 comparisonPage: an honest "best options for [use case]" page for the CLIENT'S OWN SITE that includes real competitor types${competitorNames.length ? ` (real names seen in AI answers: ${competitorNames.join(", ")})` : ""} and positions the client truthfully via their edge — fair to alternatives, specific about who should NOT hire the client. 500-800 words of markdown.
 faq: 5-6 of the buyer queries answered in 2-4 liftable sentences each, claims fenced with [VERIFY] where unproven.`,
     user: brief,
   });
-  const a = extractJson<any>(aText) ?? {};
 
   // 3. Community answers + outreach + directory entries.
-  const bText = await complete({
-    maxTokens: 4000,
+  const b = await completeJson("placement assets", {
+    maxTokens: 8000,
     system: `You draft founder-voice placement assets. Rules: the founder posts under their REAL name with affiliation stated — no astroturf, ever; answers must be 90% genuinely useful and only lightly self-referencing. Never invent facts. British English. Reply ONLY with JSON:
 {"communityAnswers":[{"context":string,"draft":string}],"outreachEmails":[{"target":string,"subject":string,"body":string}],"directoryEntries":{"short":string,"long":string}}
 communityAnswers: 3 drafts answering questions the client's buyers actually post in forums/communities; context = the kind of thread it fits; end each with a one-line signature stating name + firm.
@@ -50,7 +49,6 @@ outreachEmails: 2 pitches asking to be included in existing roundup/comparison p
 directoryEntries: short (~40 words) and long (~120 words) profile texts that repeat the entity line near-verbatim.`,
     user: brief,
   });
-  const b = extractJson<any>(bText) ?? {};
 
   const candidate: SprintPack = {
     generatedAt: new Date().toISOString(),
@@ -81,6 +79,20 @@ directoryEntries: short (~40 words) and long (~120 words) profile texts that rep
     return candidate; // best-effort — fields are individually coerced above
   }
   return parsed.data;
+}
+
+/** One retry on unparseable output — a pack with silently empty sections is a defect. */
+async function completeJson(
+  label: string,
+  opts: { maxTokens: number; system: string; user: string },
+): Promise<any> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const text = await complete(opts);
+    const parsed = extractJson<any>(text);
+    if (parsed) return parsed;
+    console.warn(`[sprintPack] ${label}: unparseable LLM output (attempt ${attempt}/2)`);
+  }
+  return {};
 }
 
 function buildBrief(input: SprintPackInput): string {
