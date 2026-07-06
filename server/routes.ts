@@ -24,6 +24,7 @@ import {
   inferEdgeSmart,
 } from "./questions";
 import { generateProfile } from "./storyEngine";
+import { generateSprintPack } from "./sprintPack";
 import { isBigClaim, extractBigClaims } from "@shared/claims";
 import {
   authConfigured,
@@ -231,6 +232,25 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
     res.json({ ok: true, profile });
   });
 
+  // Sprint Pack — the shippable work product: real citation landscape (web
+  // search) + drafted assets. Operator-only: it is the paid deliverable and
+  // costs several LLM calls including web search.
+  app.post("/api/sprint-pack", requireOperator, llmLimit, async (req, res) => {
+    const creatorId = String(req.body?.creatorId ?? "");
+    const creator = storage.getCreator(creatorId);
+    if (!creator) return res.status(404).json({ error: "creator not found" });
+    const profile = parseJson<StoryProfile | null>(creator.profileJson, null);
+    if (!profile) return res.status(400).json({ error: "generate the profile first" });
+
+    const pack = await generateSprintPack({
+      firmName: creator.name,
+      niche: creator.niche ?? undefined,
+      profile,
+    });
+    storage.update(creator.id, { sprintPackJson: JSON.stringify(pack) });
+    res.json({ ok: true, pack });
+  });
+
   // Approval + consent gates.
   app.post("/api/approve", requireOperator, (req, res) => {
     const creatorId = String(req.body?.creatorId ?? "");
@@ -268,6 +288,7 @@ export async function registerRoutes(_server: Server, app: Express): Promise<voi
       profile,
       proofs: parseJson<any[]>(creator.proofsJson, []),
       turns: parseJson<any[]>(creator.intakeJson, []),
+      sprintPack: parseJson<any>(creator.sprintPackJson, null),
     });
   });
 

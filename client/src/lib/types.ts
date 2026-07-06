@@ -1,6 +1,6 @@
-import type { StoryProfile } from "@shared/schema";
+import type { SprintPack, StoryProfile } from "@shared/schema";
 
-export type { StoryProfile };
+export type { SprintPack, StoryProfile };
 
 export interface QuestionNode {
   id: string;
@@ -34,4 +34,5 @@ export interface CreatorView {
   engine: string;
   profile: StoryProfile | null;
   proofs: Array<{ claim: string; type?: string; status: string; note?: string }>;
+  sprintPack: SprintPack | null;
 }

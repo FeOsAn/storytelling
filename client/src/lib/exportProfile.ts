@@ -1,4 +1,4 @@
-import type { StoryProfile } from "@shared/schema";
+import type { SprintPack, StoryProfile } from "@shared/schema";
 
 /** Serialize a profile to Markdown — the deliverable has to leave the app. */
 export function profileToMarkdown(name: string, p: StoryProfile): string {
@@ -51,6 +51,52 @@ export function profileToMarkdown(name: string, p: StoryProfile): string {
     `## Pitch — email`, "```", p.pitchEmail, "```", "",
   );
   return lines.filter((l) => l !== undefined).join("\n");
+}
+
+/** Serialize the Sprint Pack — appended to the profile export when present. */
+export function packToMarkdown(pack: SprintPack): string {
+  const lines: string[] = [
+    "",
+    "---",
+    "",
+    `# The Sprint Pack _(generated ${pack.generatedAt.slice(0, 10)})_`,
+    "",
+  ];
+  if (pack.targets?.length) {
+    lines.push(`## Target list — pages the engines cite today`);
+    for (const t of pack.targets.slice(0, 15)) lines.push(`- ${t.citations}× ${t.url}`);
+    lines.push("");
+  }
+  if (pack.landscape?.length) {
+    lines.push(`## Who the engines recommend, per query`);
+    for (const e of pack.landscape) {
+      lines.push(`- **${e.query}**${e.recommended?.length ? ` → ${e.recommended.join(", ")}` : ""}`);
+    }
+    lines.push("");
+  }
+  lines.push(`## Asset 1 — comparison page`, `### ${pack.comparisonPage.title}`, "", pack.comparisonPage.markdown, "");
+  if (pack.faq.length) {
+    lines.push(`## Asset 2 — answer-shaped FAQ`);
+    for (const f of pack.faq) lines.push(`**Q: ${f.q}**`, "", f.a, "");
+  }
+  if (pack.communityAnswers.length) {
+    lines.push(`## Asset 3 — community answers (post under your real name, affiliation stated)`);
+    for (const c of pack.communityAnswers) lines.push(`_${c.context}_`, "", c.draft, "");
+  }
+  if (pack.outreachEmails.length) {
+    lines.push(`## Asset 4 — placement outreach`);
+    for (const o of pack.outreachEmails) {
+      lines.push(`**To:** ${o.target}`, `**Subject:** ${o.subject}`, "", o.body, "");
+    }
+  }
+  lines.push(
+    `## Asset 5 — directory entries`,
+    `**Short:** ${pack.directoryEntries.short}`,
+    "",
+    `**Long:** ${pack.directoryEntries.long}`,
+    "",
+  );
+  return lines.join("\n");
 }
 
 export function downloadMarkdown(filename: string, content: string) {

@@ -46,6 +46,7 @@ function ensureColumn(name: string, ddl: string) {
 }
 ensureColumn("proofs_json", "proofs_json TEXT");
 ensureColumn("edge_json", "edge_json TEXT");
+ensureColumn("sprint_pack_json", "sprint_pack_json TEXT");
 
 export const db = drizzle(sqlite);
 

@@ -22,6 +22,7 @@ export const creators = sqliteTable("creators", {
   profileJson: text("profile_json"),
   proofsJson: text("proofs_json"),
   edgeJson: text("edge_json"),
+  sprintPackJson: text("sprint_pack_json"),
   createdAt: integer("created_at").notNull(),
 });
 
@@ -141,3 +142,37 @@ export const storyProfileSchema = z.object({
   plantPlan: z.array(z.string()).optional(),
 });
 export type StoryProfile = z.infer<typeof storyProfileSchema>;
+
+/* ---------------------------------------------------------------------------
+ * Sprint Pack — the shippable work product. Not advice: the actual assets,
+ * drafted in the client's voice, plus the real citation landscape the engines
+ * pull from today. This is what a sprint hands over.
+ * ------------------------------------------------------------------------- */
+
+export const landscapeEntrySchema = z.object({
+  query: z.string(),
+  /** URLs the engine actually cited when answering this query. */
+  urls: z.array(z.string()),
+  /** Which firms the answer recommended, verbatim names. */
+  recommended: z.array(z.string()).optional(),
+});
+
+export const sprintPackSchema = z.object({
+  generatedAt: z.string(),
+  /** Real cited-source map per buyer query (null = run pending). */
+  landscape: z.array(landscapeEntrySchema).nullable(),
+  /** Top target URLs across all queries, ranked by citation frequency. */
+  targets: z.array(z.object({ url: z.string(), citations: z.number() })).nullable(),
+  /** Full draft of the honest comparison page, markdown. */
+  comparisonPage: z.object({ title: z.string(), markdown: z.string() }),
+  /** Answer-shaped FAQ for the client's own site. */
+  faq: z.array(z.object({ q: z.string(), a: z.string() })),
+  /** Community answers for the founder to post under their real name. */
+  communityAnswers: z.array(z.object({ context: z.string(), draft: z.string() })),
+  /** Personalized outreach emails to placement targets. */
+  outreachEmails: z.array(z.object({ target: z.string(), subject: z.string(), body: z.string() })),
+  /** Directory/profile entries, entity-line-consistent. */
+  directoryEntries: z.object({ short: z.string(), long: z.string() }),
+});
+export type SprintPack = z.infer<typeof sprintPackSchema>;
+export type LandscapeEntry = z.infer<typeof landscapeEntrySchema>;
